@@ -32,13 +32,13 @@
   V.metricsGrid = function (obj, limit) {
     var keys = Object.keys(obj || {}).filter(function (k) { return V.isPrim(obj[k]); }).slice(0, limit || 16);
     if (!keys.length) return '';
-    return '<div class="flex flex-wrap gap-1.5">' + keys.map(function (k, i) {
+    return '<div class="flex flex-wrap gap-2">' + keys.map(function (k, i) {
       var v = obj[k], isP = P_KEYS.indexOf(k) >= 0 && typeof v === 'number';
       var text = V.fmt(v) + (isP ? stars(v) : '');
       var hi = i === 0;
-      return '<div class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 border whitespace-nowrap ' + (hi ? 'bg-blue-50/70 border-blue-200' : 'bg-slate-50 border-slate-200/80') + '">' +
-        '<span class="text-[10px] font-semibold ' + (hi ? 'text-blue-700/80' : 'text-slate-500') + '" title="' + A.esc(k) + '">' + A.esc(V.label(k)) + '</span>' +
-        '<span class="text-xs font-bold font-mono ' + (hi ? 'text-blue-800' : 'text-slate-900') + '">' + text + '</span></div>';
+      return '<div class="flex items-center gap-2 rounded-xl px-3.5 py-2.5 border whitespace-nowrap ' + (hi ? 'bg-blue-50/70 border-blue-200' : 'bg-slate-50 border-slate-200/80') + '">' +
+        '<span class="text-[11px] font-semibold ' + (hi ? 'text-blue-700/80' : 'text-slate-500') + '" title="' + A.esc(k) + '">' + A.esc(V.label(k)) + '</span>' +
+        '<span class="text-sm font-extrabold font-mono ' + (hi ? 'text-blue-800' : 'text-slate-900') + '">' + text + '</span></div>';
     }).join('') + '</div>';
   };
 
