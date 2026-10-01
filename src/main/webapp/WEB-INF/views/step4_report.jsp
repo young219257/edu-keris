@@ -14,15 +14,6 @@
       <h2 class="text-xl font-bold text-slate-900 tracking-tight" id="rp-title">분석 결과를 불러오는 중...</h2>
     </div>
     <div class="flex items-center gap-2 shrink-0">
-      <button type="button" id="btn-pdf" class="hidden px-3.5 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 rounded-xl text-xs font-semibold shadow-2xs transition-colors items-center gap-1.5 cursor-pointer">
-        <i data-lucide="file-text" class="w-3.5 h-3.5"></i><span>PDF 보고서</span>
-      </button>
-      <button type="button" id="btn-xlsx" class="hidden px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-semibold shadow-2xs transition-colors items-center gap-1.5 cursor-pointer">
-        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i><span>Excel 통계표</span>
-      </button>
-      <button type="button" id="btn-json" class="hidden px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition-colors items-center gap-1.5 cursor-pointer">
-        <i data-lucide="download" class="w-3.5 h-3.5"></i><span>결과 JSON 저장</span>
-      </button>
       <button type="button" id="btn-save" class="hidden px-4 py-2 bg-[#003876] hover:bg-[#002b5c] disabled:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors items-center gap-1.5 cursor-pointer">
         <i data-lucide="save" class="w-3.5 h-3.5"></i><span>결과 패키지 저장</span>
       </button>
@@ -43,9 +34,9 @@
       <div class="flex items-center gap-1 flex-wrap" id="rp-tabs"></div>
     </div>
 
+    <div id="rp-result" class="space-y-4"></div>
     <div id="rp-charts"></div>
-    <div id="rp-result" class="card-modern p-5 space-y-3"></div>
-    <div id="rp-raw" class="card-modern p-5 space-y-3"></div>
+    <div id="rp-rawdata" class="card-modern p-5 space-y-3"></div>
   </div>
 
   <div class="flex justify-between items-center pt-1">

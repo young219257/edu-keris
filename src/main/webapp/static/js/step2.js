@@ -64,7 +64,6 @@
     }).join('');
     var a = algo(sel.method);
     A.$('#algo-sel-name').textContent = a.name;
-    A.$('#algo-desc').innerHTML = '<strong class="text-slate-700">[' + a.tag + '] ' + A.esc(a.name) + '</strong> — ' + a.desc + '<br><span class="text-slate-400 font-mono">' + A.esc(a.formula) + '</span>';
   }
 
   /* ---------------- 진단 결과 ---------------- */
@@ -74,7 +73,6 @@
     if (!profile) return;
     var a = algo(active.method);
     var outs = totalOutliers();
-    A.$('#s2-badge').textContent = '결측치 ' + A.num(profile.total_missing_cells) + '건 · 이상치 ' + A.num(outs) + '건 검출';
     A.$('#card-rows').textContent = A.num(profile.n_rows) + '행 × ' + profile.n_cols + '변수';
     var cm = A.$('#card-missing');
     cm.textContent = A.num(profile.total_missing_cells) + '건 (' + (profile.missing_ratio * 100).toFixed(1) + '%)';
@@ -118,8 +116,6 @@
       var idx = o.sample_indices || [], vals = o.sample_values || [];
       samples = '<div class="pt-2 border-t border-slate-100"><div class="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between"><span>검출된 이상치 표본 (' + A.num(o.n_outliers) + '건, ' + (o.ratio * 100).toFixed(1) + '%' + (o.n_outliers > idx.length ? ', 상위 ' + idx.length + '건 표시' : '') + ')</span><span class="text-[10px] font-normal text-slate-400">탐지 기준: ' + A.esc(a.name) + '</span></div><div class="max-h-36 overflow-y-auto space-y-1">' +
         idx.slice(0, 20).map(function (ri, i) { return '<div class="flex items-center justify-between text-xs bg-blue-50/50 px-3 py-1.5 rounded border border-blue-100 font-mono gap-2"><span class="text-slate-600 font-bold shrink-0">#' + ri + '행</span><span class="text-slate-800 font-bold">관측값: ' + A.esc(vals[i]) + '</span></div>'; }).join('') + '</div></div>';
-    } else {
-      samples = '<div class="pt-2 border-t border-slate-100 text-center text-xs text-emerald-700 bg-emerald-50/50 py-2.5 rounded font-semibold">현재 기준(' + A.esc(a.name) + ')에서 이상치가 검출되지 않았습니다.</div>';
     }
     card.innerHTML = '<div class="flex items-center justify-between flex-wrap gap-2"><h4 class="text-xs font-bold text-slate-900">[' + A.esc(n.column) + '] 통계 지표 및 이상치 분포</h4><span class="text-[10px] text-slate-500 font-mono">' + bounds + '</span></div>' +
       '<div class="grid grid-cols-5 gap-3 text-center text-xs font-mono">' + box('최솟값', n.min) + box('1사분위(Q1)', n.q1) + box('중앙값(Median)', n.median, true) + box('3사분위(Q3)', n.q3) + box('최댓값', n.max) + '</div>' + samples;

@@ -97,6 +97,9 @@
     if (body && body.message) return body.message;
     return '요청 처리에 실패했습니다. (' + status + ')';
   }
+  function stripHtml(s) {
+    return String(s).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
   /** POST /api/v1/sessions — 토큰 발급 (쿠키에 보관, 브라우저의 모든 탭이 공유) */
   App.ensureSession = function (force) {
@@ -141,7 +144,16 @@
             return j;
           });
         }
-        if (!res.ok) { var e2 = new Error('요청 처리에 실패했습니다. (' + res.status + ')'); e2.status = res.status; throw e2; }
+        if (!res.ok) {
+          return res.text().then(function (t) {
+            var clean = t ? stripHtml(t).slice(0, 300) : '';
+            var e2 = new Error(clean || '요청 처리에 실패했습니다. (' + res.status + ')');
+            e2.status = res.status;
+            throw e2;
+          }, function () {
+            var e2 = new Error('요청 처리에 실패했습니다. (' + res.status + ')'); e2.status = res.status; throw e2;
+          });
+        }
         return res.text();
       });
     });

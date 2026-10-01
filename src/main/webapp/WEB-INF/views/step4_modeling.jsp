@@ -36,26 +36,29 @@
       <div class="pb-2.5 border-b border-slate-100 flex items-center justify-between">
         <h4 class="text-xs font-bold text-slate-900">변수 및 파라미터 설정</h4>
       </div>
-      <div id="target-box"></div>
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between text-xs">
-          <label class="font-semibold text-slate-800" id="feat-title">독립변수 (Features / X)</label>
-          <div class="flex items-center gap-1.5 text-[10px]">
-            <button type="button" id="feat-all" class="text-blue-700 hover:text-blue-800 hover:underline cursor-pointer font-medium">전체선택</button>
-            <span class="text-slate-300">|</span>
-            <button type="button" id="feat-none" class="text-slate-400 hover:underline cursor-pointer">해제</button>
-            <span class="ml-1 px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded font-mono font-bold text-[10px]" id="feat-count">0개</span>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-4">
+          <div id="target-box"></div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <label class="font-semibold text-slate-800" id="feat-title">독립변수 (Features / X)</label>
+              <div class="flex items-center gap-1.5 text-[10px]">
+                <button type="button" id="feat-all" class="text-blue-700 hover:text-blue-800 hover:underline cursor-pointer font-medium">전체선택</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" id="feat-none" class="text-slate-400 hover:underline cursor-pointer">해제</button>
+                <span class="ml-1 px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded font-mono font-bold text-[10px]" id="feat-count">0개</span>
+              </div>
+            </div>
+            <div class="border border-slate-200 rounded-lg p-2 max-h-52 overflow-y-auto space-y-1 bg-slate-50/40" id="feat-list"></div>
           </div>
         </div>
-        <div class="border border-slate-200 rounded-lg p-2 max-h-52 overflow-y-auto space-y-1 bg-slate-50/40" id="feat-list"></div>
+        <div id="extra-params" class="space-y-3"></div>
       </div>
-      <div id="extra-params" class="space-y-3"></div>
     </div>
     <div class="pt-2">
       <button type="button" id="btn-run" class="w-full py-3 bg-[#003876] hover:bg-[#002855] disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm">
         <i data-lucide="play" class="w-3.5 h-3.5"></i><span>통계 모델 분석 실행 (Run)</span>
       </button>
-      <p class="text-[10px] text-slate-400 mt-2 text-center">2단계에서 저장한 전처리 규칙(결측·이상치·스케일링)이 분석 요청에 함께 전달됩니다.</p>
     </div>
   </div>
 

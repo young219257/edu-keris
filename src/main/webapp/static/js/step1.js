@@ -1,4 +1,6 @@
-/* 1단계: 데이터 준비 및 반입 — /api/v1/datasets, /api/v1/data-cards */
+/* 1단계: 데이터 준비 및 반입 — /api/v1/datasets, /api/v1/data-cards
+ * 데이터관리카드 1개 + 반입된 데이터셋 1개까지 동시에 선택할 수 있다. 둘 다 선택되면 탭으로 전환하며
+ * 전환된 쪽이 그대로 2단계 이후의 분석 대상(A.state.datasetId)이 된다. */
 (function () {
   'use strict';
   var A = window.App;
@@ -7,16 +9,19 @@
   var PAGE = 20;
   var ALLOWED = /\.(csv|txt|xlsx|xls|json|parquet)$/i;
 
-  var current = null;                       // DatasetDetail (컬럼 포함)
-  var datasets = [];                        // 세션에 반입된 데이터셋 (upload / merged)
-  var cards = [];                           // 데이터관리카드 (DatasetRead)
+  var selected = { card: null, dataset: null };   // DatasetDetail (컬럼 포함), 종류별 최대 1개
+  var activeTab = null;                            // 'card' | 'dataset' | null — 현재 화면에 보여주는(=분석 대상) 쪽
+  var datasets = [];                               // 세션에 반입된 데이터셋 (upload / merged)
+  var cards = [];                                  // 데이터관리카드 (DatasetRead)
   var uploadError = null, dragging = false, uploading = false;
   var preview = { dsId: null, rows: [], cols: [], total: 0, loading: false };
+
+  function active() { return activeTab ? selected[activeTab] : null; }
 
   /* ---------------- 데이터관리카드 ---------------- */
   function loadCards() {
     var q = A.$('#mgmt-search').value || '';
-    return A.get('/api/v1/data-cards' + A.qs({ limit: 100, q: q })).then(function (p) {
+    return A.get('/api/v1/data-cards/definitions' + A.qs({ limit: 100, q: q })).then(function (p) {
       cards = p.items || [];
       A.$('#mgmt-total').textContent = '총 ' + A.num(p.total) + '건';
       renderCards();
@@ -25,16 +30,15 @@
 
   function renderCards() {
     var html = cards.map(function (c) {
-      var sel = current && current.id === c.id;
+      var sel = selected.card && selected.card.id === c.id;
       return '<div data-card="' + A.esc(c.id) + '" class="p-3 flex items-center justify-between transition-colors cursor-pointer select-none ' + (sel ? 'bg-blue-50/80 text-blue-950 font-semibold' : 'hover:bg-slate-50/80 text-slate-700') + '">' +
         '<div class="flex items-center gap-2.5 min-w-0 pr-2"><div class="w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ' + (sel ? 'border-blue-600 bg-blue-600' : 'border-slate-300') + '">' + (sel ? '<div class="w-1 h-1 rounded-full bg-white"></div>' : '') + '</div>' +
         '<span class="text-xs truncate" title="' + A.esc(c.name) + '">' + A.esc(c.name) + '</span></div>' +
         '<span class="text-[10px] font-mono text-slate-400 shrink-0">' + A.num(c.n_rows) + '행</span></div>';
     }).join('') || '<div class="p-4 text-xs text-slate-400 text-center">등록된 데이터관리카드가 없습니다. 우측 하단 \'카드 동기화\'로 불러올 수 있습니다.</div>';
     A.$('#mgmt-list').innerHTML = html;
-    var isCard = current && current.source_type === 'data_card';
-    A.$('#mgmt-status').innerHTML = '선택 상태: <strong class="' + (isCard ? 'text-blue-700' : 'text-slate-400') + '">' + (isCard ? A.esc(current.name) : '선택 안 됨 (선택 사항)') + '</strong>';
-    A.$('#mgmt-release').classList.toggle('hidden', !isCard);
+    A.$('#mgmt-status').innerHTML = '선택 상태: <strong class="' + (selected.card ? 'text-blue-700' : 'text-slate-400') + '">' + (selected.card ? A.esc(selected.card.name) : '선택 안 됨 (선택 사항)') + '</strong>';
+    A.$('#mgmt-release').classList.toggle('hidden', !selected.card);
   }
 
   function syncCards() {
@@ -61,10 +65,10 @@
 
   function renderDatasets() {
     A.$('#ds-list').innerHTML = datasets.map(function (d) {
-      var sel = current && current.id === d.id;
+      var sel = selected.dataset && selected.dataset.id === d.id;
       return '<div data-ds="' + A.esc(d.id) + '" class="p-3 flex items-center justify-between gap-2 cursor-pointer transition-colors ' + (sel ? 'bg-blue-50/80' : 'hover:bg-slate-50/80') + '">' +
         '<div class="min-w-0"><div class="text-xs font-bold text-slate-900 truncate">' + A.esc(d.name) + '</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">' + A.num(d.n_rows) + '행 · ' + d.n_cols + '변수 · ' + A.esc(d.source_format) + '</div></div>' +
-        '<div class="flex items-center gap-2 shrink-0">' + (sel ? '<span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">분석 대상</span>' : '') +
+        '<div class="flex items-center gap-2 shrink-0">' + (sel ? '<span class="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">선택됨</span>' : '') +
         '<button type="button" data-del="' + A.esc(d.id) + '" class="p-1 text-slate-300 hover:text-rose-600 cursor-pointer" title="삭제">' + A.icon('trash-2', 'w-3.5 h-3.5') + '</button></div></div>';
     }).join('') || '<div class="p-4 text-xs text-slate-400 text-center">반입된 데이터셋이 없습니다. 파일을 업로드해 주세요.</div>';
     A.icons();
@@ -95,32 +99,68 @@
     A.api('POST', '/api/v1/datasets/upload', fd).then(function (d) {
       uploading = false;
       A.toast('반입 및 변수 자동 인식이 완료되었습니다.');
-      return loadDatasets().then(function () { return select(d.id); });
+      return loadDatasets().then(function () { return select('dataset', d.id); });
     }).catch(function (e) { uploading = false; uploadError = e.message; renderUpload(); });
   }
 
-  /* ---------------- 데이터셋 선택 ---------------- */
-  function select(id) {
+  /* ---------------- 선택 (카드 1개 + 데이터셋 1개까지 동시 선택) ---------------- */
+  function select(kind, id) {
+    if (selected[kind] && selected[kind].id === id) {               // 이미 선택된 걸 다시 클릭 → 해제
+      selected[kind] = null;
+      if (activeTab === kind) activeTab = selected.card ? 'card' : (selected.dataset ? 'dataset' : null);
+      syncTarget();
+      renderAll();
+      return Promise.resolve();
+    }
     return A.get('/api/v1/datasets/' + encodeURIComponent(id)).then(function (d) {
-      current = d;
-      A.saveState({ datasetId: d.id, datasetName: d.name, datasetRows: d.n_rows, analysisId: null });
-      preview = { dsId: null, rows: [], cols: [], total: d.n_rows, loading: false };
+      selected[kind] = d;
+      activeTab = kind;
+      syncTarget();
       renderAll();
     }).catch(function (e) { A.toast(e.message, 'error'); });
+  }
+
+  function release(kind) {
+    selected[kind] = null;
+    if (activeTab === kind) activeTab = selected.card ? 'card' : (selected.dataset ? 'dataset' : null);
+    syncTarget();
+    renderAll();
+  }
+
+  /** 현재 활성 탭(= 2단계 이후 분석 대상)을 세션 상태에 반영 */
+  function syncTarget() {
+    var a = active();
+    A.saveState({ datasetId: a ? a.id : null, datasetName: a ? a.name : null, datasetRows: a ? a.n_rows : null, analysisId: null });
+    preview = { dsId: null, rows: [], cols: [], total: a ? a.n_rows : 0, loading: false };
+  }
+
+  /* ---------------- 탭 (카드 + 데이터셋 동시 선택 시에만 노출) ---------------- */
+  function renderTabs() {
+    var el = A.$('#s1-tabs');
+    var both = selected.card && selected.dataset;
+    el.classList.toggle('hidden', !both);
+    el.classList.toggle('flex', !!both);
+    if (!both) { el.innerHTML = ''; return; }
+    var tabs = [['card', '카드: ' + selected.card.name], ['dataset', '데이터셋: ' + selected.dataset.name]];
+    el.innerHTML = tabs.map(function (t) {
+      var on = activeTab === t[0];
+      return '<button type="button" data-tab="' + t[0] + '" class="px-3 py-1.5 text-[11px] rounded-xl font-semibold transition-colors cursor-pointer truncate max-w-[220px] ' + (on ? 'bg-white text-blue-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900') + '">' + A.esc(t[1]) + '</button>';
+    }).join('');
   }
 
   /* ---------------- 변수 정의 테이블 ---------------- */
   function renderColumns() {
     var body = A.$('#col-body');
-    if (!current) { body.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">데이터셋을 선택해 주세요.</td></tr>'; return; }
+    var cur = active();
+    if (!cur) { body.innerHTML = '<tr><td colspan="3" class="py-6 text-center text-slate-400">데이터셋을 선택해 주세요.</td></tr>'; A.$('#col-title').textContent = '변수 속성 및 데이터 타입 정의'; A.$('#col-dsname').textContent = ''; return; }
     var q = (A.$('#col-search').value || '').toLowerCase();
-    var cols = current.columns || [];
+    var cols = cur.columns || [];
     A.$('#col-title').textContent = '변수 속성 및 데이터 타입 정의 (' + cols.length + '개 변수)';
-    A.$('#col-dsname').textContent = current.name;
-    var editable = current.source_type === 'upload';
+    A.$('#col-dsname').textContent = cur.name;
+    var editable = cur.source_type === 'upload';
     body.innerHTML = cols.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; }).map(function (c) {
-      return '<tr class="hover:bg-slate-50/70 transition-colors"><td class="py-2 px-4 font-mono font-semibold text-slate-800">' + A.esc(c.name) + '</td><td class="py-2 px-4 text-slate-500 font-mono">' + A.esc(c.dtype) + '</td>' +
-        '<td class="py-2 px-4 text-right font-mono ' + (c.n_missing > 0 ? 'text-amber-600 font-bold' : 'text-slate-400') + '">' + A.num(c.n_missing) + '</td><td class="py-2 px-4 text-right font-mono text-slate-500">' + A.num(c.n_unique) + '</td>' +
+      return '<tr class="hover:bg-slate-50/70 transition-colors"><td class="py-2 px-4 font-mono font-semibold text-slate-800">' + A.esc(c.name) + '</td>' +
+        '<td class="py-2 px-4 text-right font-mono text-slate-500">' + A.num(c.n_unique) + '</td>' +
         '<td class="py-2 px-4"><select data-col="' + A.esc(c.name) + '"' + (editable ? '' : ' disabled title="데이터관리카드/병합 데이터셋은 타입을 변경할 수 없습니다. 직접 업로드한 파일만 변경 가능합니다."') + ' class="bg-white border border-slate-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-blue-600 ' + (editable ? 'text-slate-800 cursor-pointer' : 'text-slate-400 bg-slate-50 cursor-not-allowed') + '">' +
         ROLES.map(function (o) { return '<option value="' + o[0] + '"' + (c.role === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></td></tr>';
     }).join('');
@@ -128,15 +168,16 @@
 
   /* ---------------- 미리보기 ---------------- */
   function loadPreview() {
-    if (!current || preview.loading) return;
-    if (preview.dsId !== current.id) preview = { dsId: current.id, rows: [], cols: [], total: current.n_rows, loading: false };
+    var cur = active();
+    if (!cur || preview.loading) return;
+    if (preview.dsId !== cur.id) preview = { dsId: cur.id, rows: [], cols: [], total: cur.n_rows, loading: false };
     if (preview.rows.length >= preview.total && preview.rows.length > 0) { renderPreview(); return; }
     preview.loading = true;
     var more = A.$('#preview-more');
     more.classList.remove('hidden'); more.classList.add('flex');
-    var id = current.id;
+    var id = cur.id;
     A.get('/api/v1/datasets/' + encodeURIComponent(id) + '/preview' + A.qs({ limit: PAGE, offset: preview.rows.length })).then(function (r) {
-      if (!current || current.id !== id) return;
+      if (!active() || active().id !== id) return;
       preview.rows = preview.rows.concat(r.rows || []);
       preview.cols = r.columns || preview.cols;
       preview.total = r.total_rows;
@@ -147,8 +188,9 @@
   }
 
   function renderPreview() {
-    if (!current) return;
-    A.$('#preview-name').textContent = current.name;
+    var cur = active();
+    if (!cur) { A.$('#preview-name').textContent = ''; A.$('#preview-count').textContent = ''; A.$('#preview-head').innerHTML = ''; A.$('#preview-body').innerHTML = ''; return; }
+    A.$('#preview-name').textContent = cur.name;
     A.$('#preview-count').textContent = '(' + preview.rows.length + ' / ' + A.num(preview.total) + ' 행 표출)';
     var cols = preview.cols;
     A.$('#preview-head').innerHTML = '<tr class="text-slate-600 text-[11px] font-semibold"><th class="py-2 px-3 text-slate-400 w-10 text-center font-mono">#</th>' +
@@ -157,19 +199,21 @@
       return '<tr class="hover:bg-slate-50/70 transition-colors"><td class="py-1.5 px-3 text-slate-400 text-center">' + (i + 1) + '</td>' +
         cols.map(function (c) {
           var v = r[c];
-          return '<td class="py-1.5 px-3 truncate max-w-[160px] whitespace-nowrap ' + (v === null || v === undefined ? 'text-rose-300' : 'text-slate-700') + '">' + (v === null || v === undefined ? '결측' : A.esc(v)) + '</td>';
+          return '<td class="py-1.5 px-3 truncate max-w-[160px] whitespace-nowrap text-slate-700">' + (v === null || v === undefined ? '' : A.esc(v)) + '</td>';
         }).join('') + '</tr>';
     }).join('');
   }
 
   function renderAll() {
-    A.$('#s1-current-name').textContent = current ? current.name : '선택 안 됨';
-    A.$('#s1-target-name').textContent = current ? current.name + ' (' + A.num(current.n_rows) + '행)' : '없음';
-    A.$('#btn-proceed').disabled = !current;
+    var cur = active();
+    A.$('#s1-current-name').textContent = cur ? cur.name : '선택 안 됨';
+    A.$('#s1-target-name').textContent = cur ? cur.name + ' (' + A.num(cur.n_rows) + '행)' : '없음';
+    A.$('#btn-proceed').disabled = !cur;
+    renderTabs();
     renderCards();
     renderDatasets();
     renderColumns();
-    if (current) loadPreview();
+    if (cur) loadPreview(); else renderPreview();
     A.icons();
   }
 
@@ -179,12 +223,15 @@
     A.$('#col-search').addEventListener('input', renderColumns);
     A.$('#mgmt-list').addEventListener('click', function (e) {
       var c = e.target.closest('[data-card]');
-      if (c) select(c.getAttribute('data-card'));
+      if (c) select('card', c.getAttribute('data-card'));
     });
     A.$('#mgmt-sync').addEventListener('click', syncCards);
-    A.$('#mgmt-release').addEventListener('click', function () {
-      current = null;
-      A.saveState({ datasetId: null, datasetName: null });
+    A.$('#mgmt-release').addEventListener('click', function () { release('card'); });
+    A.$('#s1-tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-tab]');
+      if (!b) return;
+      activeTab = b.getAttribute('data-tab');
+      syncTarget();
       renderAll();
     });
 
@@ -207,21 +254,22 @@
         var id = del.getAttribute('data-del');
         if (!window.confirm('이 데이터셋과 관련 분석 결과를 삭제할까요?')) return;
         A.del('/api/v1/datasets/' + encodeURIComponent(id)).then(function () {
-          if (current && current.id === id) { current = null; A.saveState({ datasetId: null, datasetName: null }); }
+          if (selected.dataset && selected.dataset.id === id) release('dataset');
           A.toast('데이터셋이 삭제되었습니다.');
           return loadDatasets().then(renderAll);
         }).catch(function (err) { A.toast(err.message, 'error'); });
         return;
       }
       var c = e.target.closest('[data-ds]');
-      if (c) select(c.getAttribute('data-ds'));
+      if (c) select('dataset', c.getAttribute('data-ds'));
     });
 
     A.$('#col-body').addEventListener('change', function (e) {
       var sel = e.target.closest('select[data-col]');
-      if (!sel || !current || current.source_type !== 'upload') return;
-      A.patch('/api/v1/datasets/' + encodeURIComponent(current.id) + '/columns/types', { columns: [{ name: sel.getAttribute('data-col'), role: sel.value }] }).then(function (d) {
-        current = d;
+      var cur = active();
+      if (!sel || !cur || cur.source_type !== 'upload') return;
+      A.patch('/api/v1/datasets/' + encodeURIComponent(cur.id) + '/columns/types', { columns: [{ name: sel.getAttribute('data-col'), role: sel.value }] }).then(function (d) {
+        selected[activeTab] = d;
         renderColumns();
         A.toast('변수 타입이 변경되었습니다.');
       }).catch(function (err) { A.toast(err.message, 'error'); renderColumns(); });
@@ -233,7 +281,7 @@
     });
 
     A.$('#btn-proceed').addEventListener('click', function () {
-      if (!current) { A.toast('분석할 데이터셋을 선택해 주세요.', 'error'); return; }
+      if (!active()) { A.toast('분석할 데이터셋을 선택해 주세요.', 'error'); return; }
       location.href = A.ctx + '/analysis/step2';
     });
 

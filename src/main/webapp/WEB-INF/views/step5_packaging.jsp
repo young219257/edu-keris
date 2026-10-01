@@ -27,17 +27,6 @@
         </div>
         <div class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1" id="pk-list"></div>
       </div>
-
-      <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-4 space-y-3">
-        <div class="flex items-center gap-2 pb-2 border-b border-slate-100"><i data-lucide="package-plus" class="w-4 h-4 text-blue-700"></i><h4 class="text-xs font-bold text-slate-900">새 분석 패키지 만들기</h4></div>
-        <input type="text" id="new-name" placeholder="패키지 이름" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600">
-        <input type="text" id="new-desc" placeholder="설명 (선택)" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600">
-        <div class="text-[11px] font-semibold text-slate-700">포함할 분석 (성공한 분석만)</div>
-        <div class="border border-slate-200 rounded-lg p-2 max-h-40 overflow-y-auto space-y-0.5 bg-slate-50/40" id="an-list"></div>
-        <button type="button" id="btn-create" class="w-full py-2.5 bg-[#003876] hover:bg-[#002855] disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
-          <i data-lucide="save" class="w-3.5 h-3.5"></i><span>패키지 생성</span>
-        </button>
-      </div>
     </div>
 
     <%-- 우: 상세 --%>

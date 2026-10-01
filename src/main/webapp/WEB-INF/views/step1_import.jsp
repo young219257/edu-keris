@@ -70,6 +70,9 @@
     </div>
   </div>
 
+  <%-- 카드 + 데이터셋이 동시에 선택된 경우에만 노출되는 전환 탭 --%>
+  <div id="s1-tabs" class="hidden items-center gap-1 p-1 bg-slate-100/90 rounded-2xl w-fit"></div>
+
   <%-- 3. 변수 속성 및 타입 정의 --%>
   <div class="card-modern overflow-hidden" id="col-card">
     <div class="p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
@@ -90,8 +93,6 @@
         <thead class="sticky top-0 bg-slate-50/95 backdrop-blur-xs z-10 border-b border-slate-200/80">
           <tr class="text-slate-500 font-semibold text-[11px]">
             <th class="py-2.5 px-4">변수명</th>
-            <th class="py-2.5 px-4">원본 자료형</th>
-            <th class="py-2.5 px-4 text-right">결측</th>
             <th class="py-2.5 px-4 text-right">고유값</th>
             <th class="py-2.5 px-4 w-48">타입</th>
           </tr>

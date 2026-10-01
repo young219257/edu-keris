@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var A = window.App;
-  var items = [], analyses = [], selected = null, detail = null, repro = null, busy = null;
+  var items = [], selected = null, detail = null, repro = null, busy = null;
 
   function notice(msg) {
     A.$('#pk-notice-msg').textContent = msg;
@@ -83,37 +83,11 @@
     renderDetail();
   }
 
-  /* ---------------- 새 패키지 ---------------- */
-  function loadAnalyses() {
-    return A.get('/api/v1/analyses' + A.qs({ status: 'succeeded', limit: 100 })).then(function (p) {
-      analyses = p.items || [];
-      A.$('#an-list').innerHTML = analyses.map(function (a) {
-        return '<label class="flex items-start gap-2 text-xs text-slate-700 cursor-pointer p-1.5 rounded hover:bg-white"><input type="checkbox" data-an="' + A.esc(a.id) + '" ' + (A.state.analysisId === a.id ? 'checked' : '') + ' class="mt-0.5 rounded text-blue-600 border-slate-300"><span class="min-w-0"><span class="block truncate font-medium">' + A.esc(a.name) + '</span><span class="block text-[10px] text-slate-400 font-mono">' + A.esc(a.id) + ' · ' + A.date(a.created_at) + '</span></span></label>';
-      }).join('') || '<div class="text-[11px] text-slate-400 p-2 text-center">패키지로 묶을 수 있는 성공한 분석이 없습니다. 4단계에서 분석을 실행해 주세요.</div>';
-    }).catch(function () { /* ignore */ });
-  }
-
-  function createPackage() {
-    var ids = A.$$('#an-list input[data-an]:checked').map(function (c) { return c.getAttribute('data-an'); });
-    var name = (A.$('#new-name').value || '').trim();
-    if (!name) { A.toast('패키지 이름을 입력하세요.', 'error'); return; }
-    if (!ids.length) { A.toast('포함할 분석을 1개 이상 선택하세요.', 'error'); return; }
-    var b = A.$('#btn-create');
-    b.disabled = true;
-    A.post('/api/v1/packages', { name: name, description: (A.$('#new-desc').value || '').trim() || null, analysis_ids: ids }).then(function (p) {
-      A.$('#new-name').value = '';
-      A.$('#new-desc').value = '';
-      notice("'" + p.name + "' 패키지가 생성되었습니다.");
-      return loadPackages().then(function () { select(p.id); });
-    }).catch(function (e) { A.toast(e.message, 'error'); }).then(function () { b.disabled = false; });
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
     A.$('#pk-list').addEventListener('click', function (e) {
       var c = e.target.closest('[data-id]');
       if (c) { repro = null; select(c.getAttribute('data-id')); }
     });
-    A.$('#btn-create').addEventListener('click', createPackage);
     A.$('#pk-detail').addEventListener('click', function (e) {
       var b = e.target.closest('[data-act]');
       if (!b || !selected) return;
@@ -146,7 +120,6 @@
     loadPackages().then(function () {
       if (items.length) select(items[0].id); else renderDetail();
     });
-    loadAnalyses();
     A.icons();
   });
 })();

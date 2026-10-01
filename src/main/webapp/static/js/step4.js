@@ -72,17 +72,25 @@
   }
 
   /* ---------------- 변수/파라미터 ---------------- */
+  var SELECT_CLS = 'w-full appearance-none bg-white border border-slate-300 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-800 shadow-2xs transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+  function selectWrap(innerSelect) {
+    return '<div class="relative">' + innerSelect + '<i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i></div>';
+  }
+  /** 모든 필드를 동일한 박스(테두리·배경)로 감싸 좌/우 리듬을 맞춘다 */
+  function field(label, body) {
+    return '<div class="p-3 rounded-lg border border-slate-200 bg-slate-50/40 space-y-1.5"><label class="text-xs font-semibold text-slate-800 block">' + label + '</label>' + body + '</div>';
+  }
   function colSelect(id, key, from, selected, optional) {
-    return '<select id="' + id + '" data-key="' + key + '" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600">' +
+    return selectWrap('<select id="' + id + '" data-key="' + key + '" class="' + SELECT_CLS + '">' +
       '<option value="">' + (optional ? '(사용 안 함)' : '(선택)') + '</option>' +
-      pool(from).map(function (c) { return '<option value="' + A.esc(c.name) + '"' + (selected === c.name ? ' selected' : '') + '>' + A.esc(c.name) + '</option>'; }).join('') + '</select>';
+      pool(from).map(function (c) { return '<option value="' + A.esc(c.name) + '"' + (selected === c.name ? ' selected' : '') + '>' + A.esc(c.name) + '</option>'; }).join('') + '</select>');
   }
 
   function renderVars() {
     var m = meta(cfg.method);
     var box = A.$('#target-box');
     if (m.target) {
-      box.innerHTML = '<div class="space-y-1.5"><label class="text-xs font-semibold text-slate-800">' + (cfg.method === 'psm' ? '결과변수 (Outcome / Y)' : '종속변수 (Target / Y)') + '</label>' + colSelect('sel-target', 'target', 'numeric', cfg.target, false) + '</div>';
+      box.innerHTML = field(cfg.method === 'psm' ? '결과변수 (Outcome / Y)' : '종속변수 (Target / Y)', colSelect('sel-target', 'target', 'numeric', cfg.target, false));
     } else {
       box.innerHTML = '<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">선택한 <strong>' + A.esc(m.name) + '</strong> 기법은 종속변수(Target) 지정이 필요하지 않습니다.</div>';
     }
@@ -97,21 +105,21 @@
     A.$('#extra-params').innerHTML = m.fields.map(function (k) {
       var f = FIELDS[k];
       if (f.t === 'select') {
-        return '<div class="space-y-1"><label class="text-xs font-semibold text-slate-800">' + f.label + '</label><select data-par="' + k + '" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs">' +
-          f.opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(pv(k)) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>';
+        return field(f.label, selectWrap('<select data-par="' + k + '" class="' + SELECT_CLS + '">' +
+          f.opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(pv(k)) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'));
       }
       if (f.t === 'check') {
-        return '<label class="flex items-center gap-2 text-xs text-slate-800 font-medium cursor-pointer"><input type="checkbox" data-par="' + k + '" ' + (pv(k) ? 'checked' : '') + ' class="rounded text-blue-600 border-slate-300">' + f.label + '</label>';
+        return '<div class="p-3 rounded-lg border border-slate-200 bg-slate-50/40"><label class="flex items-center gap-2 text-xs text-slate-800 font-semibold cursor-pointer"><input type="checkbox" data-par="' + k + '" ' + (pv(k) ? 'checked' : '') + ' class="rounded text-blue-600 border-slate-300 focus:ring-blue-500">' + f.label + '</label></div>';
       }
       if (f.t === 'text') {
-        return '<div class="space-y-1"><label class="text-xs font-semibold text-slate-800">' + f.label + '</label><input type="text" data-par="' + k + '" value="' + A.esc(cfg.params[k] || '') + '" placeholder="' + A.esc(f.ph || '') + '" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs"></div>';
+        return field(f.label, '<input type="text" data-par="' + k + '" value="' + A.esc(cfg.params[k] || '') + '" placeholder="' + A.esc(f.ph || '') + '" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs shadow-2xs transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600">');
       }
       if (f.t === 'col') {
-        return '<div class="space-y-1"><label class="text-xs font-semibold text-slate-800">' + f.label + '</label>' + colSelect('par-' + k, k, f.from, cfg.params[k], !f.required).replace('data-key="' + k + '"', 'data-par="' + k + '"') + '</div>';
+        return field(f.label, colSelect('par-' + k, k, f.from, cfg.params[k], !f.required).replace('data-key="' + k + '"', 'data-par="' + k + '"'));
       }
       var sel = cfg.params[k] || [];
-      return '<div class="space-y-1"><label class="text-xs font-semibold text-slate-800">' + f.label + '</label><div class="border border-slate-200 rounded-lg p-2 max-h-32 overflow-y-auto space-y-0.5 bg-slate-50/40">' +
-        pool(f.from).map(function (c) { return '<label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer p-1 rounded hover:bg-white"><input type="checkbox" data-multi="' + k + '" value="' + A.esc(c.name) + '" ' + (sel.indexOf(c.name) >= 0 ? 'checked' : '') + ' class="rounded text-blue-600 border-slate-300"><span class="truncate">' + A.esc(c.name) + '</span></label>'; }).join('') + '</div></div>';
+      return field(f.label, '<div class="border border-slate-200 rounded-lg p-2 max-h-32 overflow-y-auto space-y-0.5 bg-white">' +
+        pool(f.from).map(function (c) { return '<label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer p-1 rounded hover:bg-slate-50"><input type="checkbox" data-multi="' + k + '" value="' + A.esc(c.name) + '" ' + (sel.indexOf(c.name) >= 0 ? 'checked' : '') + ' class="rounded text-blue-600 border-slate-300"><span class="truncate">' + A.esc(c.name) + '</span></label>'; }).join('') + '</div>');
     }).join('');
     A.$('#btn-run').disabled = running;
   }
@@ -154,11 +162,10 @@
       return;
     }
     var r = analysis, st = STATUS[r.status] || STATUS.pending, m = meta(r.method);
-    var err = r.error ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '';
+    var err = (r.status === 'failed') ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.</div>' : '';
     p.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2.5">' +
       '<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center shrink-0">' + A.icon('sparkles', 'w-4 h-4') + '</div><div><div class="flex items-center gap-2"><h4 class="text-xs font-bold text-slate-900">' + A.esc(m.name) + ' 연산 결과</h4>' +
-      '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.esc(r.id) + ' · ' + A.date(r.completed_at || r.created_at) + (r.duration_ms !== null && r.duration_ms !== undefined ? ' · ' + A.num(r.duration_ms) + 'ms' : '') + '</div></div></div>' +
-      (ok ? '<a href="' + A.ctx + '/analysis/step4/report" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5">' + A.icon('bar-chart-3', 'w-3.5 h-3.5') + '차트·상세 결과</a>' : '') + '</div>' + err;
+      '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.date(r.completed_at || r.created_at) + '</div></div></div></div>' + err;
     A.icons();
   }
 
@@ -189,7 +196,7 @@
       analysis = r;
       A.saveState({ analysisId: r.id });
       renderResult();
-      if (r.status === 'failed') A.toast('분석에 실패했습니다: ' + (r.error || ''), 'error');
+      if (r.status === 'failed') A.toast('분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.', 'error');
       else A.toast('분석 모델 연산이 완료되었습니다. (' + m.name + ')');
     }).catch(function (e) { A.toast(e.message, 'error'); }).then(function () {
       running = false;
@@ -249,7 +256,7 @@
       }
       if (!k) return;
       cfg.params[k] = t.type === 'checkbox' ? t.checked : t.value;
-      if (k === 'auto_k') renderVars();
+      if (k === 'auto_k') { renderVars(); A.icons(); }
     });
     A.$('#btn-run').addEventListener('click', run);
     A.$('#pipe-toggle').addEventListener('click', function () {

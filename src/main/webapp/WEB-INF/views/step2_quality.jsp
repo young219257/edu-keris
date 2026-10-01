@@ -12,10 +12,6 @@
       </div>
       <h2 class="text-xl font-bold text-slate-900 tracking-tight">데이터 품질 진단 및 전처리 규칙 수립</h2>
     </div>
-    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50/90 text-amber-900 border border-amber-200/80 rounded-xl text-xs font-semibold shrink-0">
-      <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
-      <span id="s2-badge">결측치 - · 이상치 - 검출</span>
-    </div>
   </div>
 
   <%-- 이상치 탐지 알고리즘 선택 (7대 기법) --%>
@@ -41,7 +37,6 @@
         <i data-lucide="shield-check" class="w-4 h-4"></i><span>선택 기법으로 이상치 재탐지 실행</span>
       </button>
     </div>
-    <div class="mt-3 text-[11px] text-slate-500 leading-relaxed bg-slate-50 rounded-lg border border-slate-200 p-3" id="algo-desc"></div>
   </div>
 
   <%-- 품질 진단 요약 --%>
@@ -81,9 +76,6 @@
         <i data-lucide="sliders-horizontal" class="w-4 h-4 text-[#003876]"></i>
         <h3 class="text-xs font-bold text-slate-900">데이터 정제 및 전처리 규칙 설정</h3>
       </div>
-      <span class="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>선택 시 즉시 저장 (분석 실행 시 반영)
-      </span>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="strategy-grid"></div>
   </div>
