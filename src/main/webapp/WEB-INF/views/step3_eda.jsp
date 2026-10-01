@@ -49,21 +49,6 @@
     </div>
   </div>
 
-  <%-- 범주형 요약 --%>
-  <div class="card-modern overflow-hidden hidden" id="cat-card">
-    <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-      <h4 class="text-xs font-bold text-slate-900">범주형 변수 요약 <span class="ml-1 px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 font-mono text-[10px] font-bold rounded-full" id="cat-count"></span></h4>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs border-collapse">
-        <thead><tr class="bg-slate-50 text-slate-700 border-b border-slate-200 text-[11px] font-semibold">
-          <th class="py-2.5 px-3">변수명</th><th class="py-2.5 px-2.5 text-right">유효표본(N)</th><th class="py-2.5 px-2.5 text-right">결측</th><th class="py-2.5 px-2.5 text-right">고유값</th><th class="py-2.5 px-2.5">최빈값</th><th class="py-2.5 px-3">상위 빈도</th>
-        </tr></thead>
-        <tbody class="divide-y divide-slate-100 text-[11px]" id="cat-body"></tbody>
-      </table>
-    </div>
-  </div>
-
   <%-- 상관행렬 --%>
   <div class="card-modern overflow-hidden">
     <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50">

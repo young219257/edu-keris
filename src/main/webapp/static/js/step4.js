@@ -8,7 +8,6 @@
   var CAT_CLS = { '기초': 'bg-blue-50 text-blue-700', '예측': 'bg-indigo-50 text-indigo-700', '군집': 'bg-purple-50 text-purple-700', '고급': 'bg-emerald-50 text-emerald-700' };
   /* API AnalysisMethod 14종. fields = AnalysisParams 중 화면에 노출할 항목 */
   var METHODS = [
-    { id: 'descriptive', name: '기술통계', en: 'Descriptive', cat: '기초', icon: 'bar-chart-2', desc: '평균·표준편차·정규성 등 기초 통계', target: false, feat: '투입 변수 (Variables)', fields: [] },
     { id: 'correlation', name: '상관분석', en: 'Correlation', cat: '기초', icon: 'network', desc: '변수 간 상관계수 행렬', target: false, feat: '투입 변수 (Variables)', fields: ['correlation_method'] },
     { id: 'linear_regression', name: '선형회귀', en: 'Linear Regression', cat: '예측', icon: 'trending-up', desc: '연속형 종속변수 예측', target: true, feat: '독립변수 (Features / X)', fields: ['weight_column', 'test_size', 'fit_intercept'] },
     { id: 'logistic_regression', name: '로지스틱 회귀', en: 'Logistic Regression', cat: '예측', icon: 'git-branch', desc: '이진 범주 확률 예측', target: true, feat: '독립변수 (Features / X)', fields: ['positive_label', 'weight_column', 'test_size', 'max_iter'] },

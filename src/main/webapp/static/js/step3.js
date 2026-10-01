@@ -27,19 +27,6 @@
         '<td class="py-2.5 px-2.5 text-right text-slate-600">' + sgn(n.kurtosis) + '</td>' +
         '<td class="py-2.5 px-3 text-right">' + (ratio > 0 ? '<span class="text-amber-600 font-medium">' + ratio.toFixed(1) + '%</span>' : '<span class="text-emerald-600 font-medium">0%</span>') + '</td></tr>';
     }).join('') || '<tr><td colspan="12" class="py-8 text-center text-slate-400 font-sans">수치형 변수가 없습니다.</td></tr>';
-
-    var cats = p.categorical || [];
-    A.$('#cat-card').classList.toggle('hidden', !cats.length);
-    A.$('#cat-count').textContent = cats.length + '개 변수';
-    A.$('#cat-body').innerHTML = cats.map(function (c) {
-      var top = (c.top_values || []).slice(0, 4).map(function (t) {
-        var k = Object.keys(t);
-        var name = t.value !== undefined ? t.value : t.name !== undefined ? t.name : t[k[0]];
-        var cnt = t.count !== undefined ? t.count : t.n !== undefined ? t.n : t[k[1]];
-        return '<span class="inline-block mr-1.5 px-1.5 py-0.5 bg-slate-100 rounded font-mono text-[10px]">' + A.esc(name) + ' <strong>' + A.esc(cnt) + '</strong></span>';
-      }).join('');
-      return '<tr class="hover:bg-slate-50/60"><td class="py-2 px-3 font-medium text-slate-800">' + A.esc(c.column) + '</td><td class="py-2 px-2.5 text-right font-mono">' + A.num(c.count) + '</td><td class="py-2 px-2.5 text-right font-mono ' + (c.missing > 0 ? 'text-amber-600' : 'text-slate-400') + '">' + A.num(c.missing) + '</td><td class="py-2 px-2.5 text-right font-mono">' + A.num(c.n_unique) + '</td><td class="py-2 px-2.5 font-mono">' + A.esc(c.mode) + '</td><td class="py-2 px-3">' + top + '</td></tr>';
-    }).join('');
   }
 
   var METHOD = { pearson: '피어슨 상관계수 매트릭스 (Pearson Correlation Matrix)', spearman: '스피어만 순위상관 매트릭스 (Spearman)', kendall: '켄달 순위상관 매트릭스 (Kendall)' };
