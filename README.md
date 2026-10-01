@@ -33,7 +33,7 @@ mvn clean package            # → target/app.war  (JDK 7 + Maven 3.x 필요)
 JDK 8 이상에서 컴파일만 확인하려면: `mvn -Dmaven.compiler.source=8 -Dmaven.compiler.target=8 clean package`
 
 ## 세션 / 화면 상태
-* 화면이 처음 열릴 때 `POST /api/v1/sessions` 로 토큰을 발급받아 `sessionStorage` 에 보관하고, 모든 호출에 `X-Session-Token` 을 붙입니다 (5분마다 heartbeat).
+* 화면이 처음 열릴 때 `POST /api/v1/sessions` 로 토큰을 발급받아 쿠키에 보관하고, 모든 호출에 `X-Session-Token` 을 붙입니다 (5분마다 heartbeat). 쿠키는 브라우저 전체가 공유하므로 같은 브라우저의 다른 탭에서도 토큰이 살아있는 동안 세션이 유지됩니다.
 * 선택한 데이터셋·전처리 규칙·모형 설정·마지막 분석 ID 도 브라우저 탭의 `sessionStorage` 에 보관합니다 (서버는 상태를 갖지 않음).
 * 세션은 마지막 요청 후 1시간 뒤 만료되며 데이터셋·분석 결과가 함께 삭제됩니다 (공유 중인 패키지는 7일 유지).
 

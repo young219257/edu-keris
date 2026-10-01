@@ -53,7 +53,7 @@
             <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i>
             <h3 class="text-xs font-bold text-slate-900">데이터 파일 직접 업로드</h3>
           </div>
-          <span class="text-[11px] text-slate-400">CSV, TSV, XLSX, JSON 지원</span>
+          <span class="text-[11px] text-slate-400">CSV, XLSX, JSON 지원</span>
         </div>
         <div id="upload-area"></div>
       </div>
@@ -93,7 +93,7 @@
             <th class="py-2.5 px-4">원본 자료형</th>
             <th class="py-2.5 px-4 text-right">결측</th>
             <th class="py-2.5 px-4 text-right">고유값</th>
-            <th class="py-2.5 px-4 w-48">변수 역할(타입)</th>
+            <th class="py-2.5 px-4 w-48">타입</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-[11px]" id="col-body"></tbody>

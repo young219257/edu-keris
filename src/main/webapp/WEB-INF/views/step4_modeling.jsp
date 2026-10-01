@@ -64,14 +64,6 @@
     <div class="lg:col-span-7 card-modern p-4 sm:p-5 space-y-4" id="result-panel"></div>
   </div>
 
-  <%-- 이 데이터셋의 분석 이력 --%>
-  <div class="card-modern overflow-hidden">
-    <div class="px-4 py-3 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
-      <div class="flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-blue-600"></i><span class="text-xs font-bold text-slate-900">이 데이터셋의 분석 이력</span><span class="text-[10px] font-mono text-slate-500" id="hist-count"></span></div>
-    </div>
-    <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto" id="hist-list"></div>
-  </div>
-
   <%-- 파이프라인 조건 --%>
   <div class="card-modern overflow-hidden">
     <button type="button" id="pipe-toggle" class="w-full px-4 py-3 bg-slate-50/70 hover:bg-slate-100/70 flex items-center justify-between text-left transition-colors cursor-pointer border-b border-slate-100">

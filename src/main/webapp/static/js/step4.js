@@ -177,22 +177,6 @@
   }
   function row(k, v) { return '<div class="flex items-center justify-between"><span class="text-slate-500 font-mono">' + A.esc(k) + ':</span><span class="font-medium text-slate-800">' + A.esc(v) + '</span></div>'; }
 
-  /* ---------------- 이력 ---------------- */
-  function loadHistory() {
-    return A.get('/api/v1/analyses' + A.qs({ dataset_id: dsId, limit: 50 })).then(function (p) {
-      var items = p.items || [];
-      A.$('#hist-count').textContent = '(' + A.num(p.total) + '건)';
-      A.$('#hist-list').innerHTML = items.map(function (a) {
-        var st = STATUS[a.status] || STATUS.pending, on = analysis && analysis.id === a.id;
-        return '<div data-hist="' + A.esc(a.id) + '" class="px-4 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ' + (on ? 'bg-blue-50/70' : 'hover:bg-slate-50') + '">' +
-          '<div class="min-w-0"><div class="text-xs font-bold text-slate-900 truncate">' + A.esc(a.name) + '</div><div class="text-[10px] text-slate-400 font-mono">' + A.esc(a.id) + ' · ' + A.date(a.created_at) + '</div></div>' +
-          '<div class="flex items-center gap-2 shrink-0"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span>' +
-          '<button type="button" data-hdel="' + A.esc(a.id) + '" class="p-1 text-slate-300 hover:text-rose-600 cursor-pointer" title="삭제">' + A.icon('trash-2', 'w-3.5 h-3.5') + '</button></div></div>';
-      }).join('') || '<div class="p-6 text-center text-xs text-slate-400">아직 실행한 분석이 없습니다.</div>';
-      A.icons();
-    }).catch(function () { /* ignore */ });
-  }
-
   function run() {
     if (running) return;
     var bad = validate();
@@ -207,7 +191,6 @@
       analysis = r;
       A.saveState({ analysisId: r.id });
       renderResult();
-      loadHistory();
       if (r.status === 'failed') A.toast('분석에 실패했습니다: ' + (r.error || ''), 'error');
       else A.toast('분석 모델 연산이 완료되었습니다. (' + m.name + ')');
     }).catch(function (e) { A.toast(e.message, 'error'); }).then(function () {
@@ -271,26 +254,6 @@
       if (k === 'auto_k') renderVars();
     });
     A.$('#btn-run').addEventListener('click', run);
-    A.$('#hist-list').addEventListener('click', function (e) {
-      var d = e.target.closest('[data-hdel]');
-      if (d) {
-        e.stopPropagation();
-        var id = d.getAttribute('data-hdel');
-        A.del('/api/v1/analyses/' + encodeURIComponent(id)).then(function () {
-          if (analysis && analysis.id === id) { analysis = null; A.saveState({ analysisId: null }); renderResult(); }
-          return loadHistory();
-        }).catch(function (err) { A.toast(err.message, 'error'); });
-        return;
-      }
-      var h = e.target.closest('[data-hist]');
-      if (!h) return;
-      A.get('/api/v1/analyses/' + encodeURIComponent(h.getAttribute('data-hist'))).then(function (r) {
-        analysis = r;
-        A.saveState({ analysisId: r.id });
-        renderResult();
-        loadHistory();
-      }).catch(function (err) { A.toast(err.message, 'error'); });
-    });
     A.$('#pipe-toggle').addEventListener('click', function () {
       var b = A.$('#pipe-body'), open = b.classList.toggle('hidden') === false;
       A.$('#pipe-txt').textContent = open ? '접기' : '상세 보기';
@@ -312,7 +275,7 @@
       if (A.state.analysisId) {
         return A.get('/api/v1/analyses/' + encodeURIComponent(A.state.analysisId)).then(function (r) { analysis = r; renderResult(); }).catch(function () { A.saveState({ analysisId: null }); });
       }
-    }).then(loadHistory).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); });
+    }).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); });
 
     // API 가 제공하는 기법 설명이 있으면 보강 (실패해도 내장 목록으로 동작)
     A.get('/api/v1/methods').then(function (list) {
