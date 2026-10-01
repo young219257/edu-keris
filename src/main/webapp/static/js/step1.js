@@ -76,10 +76,9 @@
     if (uploading) {
       html = '<div class="border-2 border-dashed border-blue-300 bg-blue-50/40 p-8 rounded-2xl text-center text-xs text-blue-800 font-semibold flex items-center justify-center gap-2"><span class="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full spin inline-block"></span>파일을 분석하고 있습니다...</div>';
     } else {
-      html = '<label id="dropzone" class="block border-2 border-dashed p-8 rounded-2xl transition-all cursor-pointer text-center ' + (dragging ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-blue-400 bg-slate-50/40 hover:bg-blue-50/20') + '">' +
+      html = '<label id="dropzone" class="block border-2 border-dashed p-3 rounded-2xl transition-all cursor-pointer text-center ' + (dragging ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-blue-400 bg-slate-50/40 hover:bg-blue-50/20') + '">' +
         '<input type="file" accept=".csv,.txt,.xlsx,.xls,.json,.parquet" class="hidden" id="file-input">' +
-        '<div class="flex flex-col items-center justify-center space-y-2.5"><div class="w-10 h-10 rounded-2xl bg-white text-blue-600 flex items-center justify-center border border-slate-200 shadow-2xs">' + A.icon('upload', 'w-5 h-5') + '</div>' +
-        '<div><div class="text-xs font-bold text-slate-800">클릭하여 파일 선택 또는 여기로 드래그 앤 드롭</div><div class="text-[11px] text-slate-400 mt-1" id="upload-limit">인코딩·구분자·타입을 자동으로 판별합니다.</div></div></div>' +
+        '<div class="text-xs font-bold text-slate-800">클릭하여 파일 선택 또는 여기로 드래그 앤 드롭</div>' +
         (uploadError ? '<div class="mt-3 text-xs font-semibold text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200">' + A.esc(uploadError) + '</div>' : '') + '</label>';
     }
     A.$('#upload-area').innerHTML = html;
@@ -240,10 +239,6 @@
 
     renderUpload();
     renderColumns();
-    A.get('/api/v1/datasets/meta/limits').then(function (l) {
-      var el = A.$('#upload-limit');
-      if (el && l) el.textContent = '인코딩·구분자·타입 자동 판별 · ' + Object.keys(l).map(function (k) { return k + ': ' + l[k]; }).join(' · ');
-    }).catch(function () { /* ignore */ });
 
     // 초기 로딩: 카드/데이터셋 목록만 불러온다. 이전 선택은 복원하지 않고 매번 '선택 안 됨'을 기본값으로 둔다.
     Promise.all([loadCards(), loadDatasets()]).then(renderAll);

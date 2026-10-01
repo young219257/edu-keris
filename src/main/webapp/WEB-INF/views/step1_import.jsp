@@ -34,7 +34,7 @@
           <input type="text" id="mgmt-search" placeholder="통계 관리 카드 검색..." class="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 pl-8 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all">
           <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
         </div>
-        <div id="mgmt-list" class="border border-slate-200/80 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-[340px] overflow-y-auto bg-white"></div>
+        <div id="mgmt-list" class="border border-slate-200/80 rounded-xl overflow-hidden divide-y divide-slate-100 min-h-[400px] max-h-[400px] overflow-y-auto bg-white"></div>
       </div>
       <div class="pt-2 text-[11px] text-slate-500 flex items-center justify-between">
         <span class="truncate pr-2" id="mgmt-status"></span>
@@ -65,7 +65,7 @@
           </div>
           <span class="text-[11px] text-slate-400" id="ds-total"></span>
         </div>
-        <div id="ds-list" class="border border-slate-200/80 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-[200px] overflow-y-auto bg-white"></div>
+        <div id="ds-list" class="border border-slate-200/80 rounded-xl overflow-hidden divide-y divide-slate-100 min-h-[400px] max-h-[400px] overflow-y-auto bg-white"></div>
       </div>
     </div>
   </div>

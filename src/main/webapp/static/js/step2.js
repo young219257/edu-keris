@@ -58,9 +58,9 @@
       return '<div data-algo="' + a.id + '" role="button" class="p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ' + (on ? 'border-blue-600 bg-blue-50/60 shadow-xs ring-2 ring-blue-600/20' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 bg-white') + '">' +
         '<div><div class="flex items-center justify-between gap-1"><span class="text-xs font-bold text-slate-900">' + A.esc(a.name) + '</span><span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ' + a.tagCls + '">' + a.tag + '</span></div>' +
         '<p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">' + a.desc + '</p></div>' +
-        (on ? '<div class="mt-3 pt-2 border-t border-blue-200 flex items-center justify-between text-[11px]"><span class="text-slate-700 font-semibold">' + a.label + '</span>' +
-          '<select data-thr="1" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-[11px] font-bold text-slate-800 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600">' +
-          a.opts.map(function (o) { return '<option value="' + o[0] + '"' + (Number(sel.threshold) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' : '') + '</div>';
+        '<div class="mt-3 pt-2 border-t flex items-center justify-between text-[11px] ' + (on ? 'border-blue-200' : 'border-slate-200') + '"><span class="font-semibold ' + (on ? 'text-slate-700' : 'text-slate-400') + '">' + a.label + '</span>' +
+          '<select data-thr="1"' + (on ? '' : ' disabled') + ' class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-[11px] font-bold text-slate-800 focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600' + (on ? '' : ' opacity-50 cursor-not-allowed') + '">' +
+          a.opts.map(function (o) { return '<option value="' + o[0] + '"' + (Number(on ? sel.threshold : a.def) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>';
     }).join('');
     var a = algo(sel.method);
     A.$('#algo-sel-name').textContent = a.name;
