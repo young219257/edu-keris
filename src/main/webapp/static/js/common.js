@@ -224,11 +224,15 @@
   };
 
   /** 현재 분석 대상 데이터셋이 없으면 1단계로 안내 */
+  // TEMP: 로컬 테스트를 위해 가드 비활성화. 테스트 끝나면 아래 원래 구현으로 되돌릴 것.
   App.requireDataset = function () {
+    return true;
+    /*
     if (App.state.datasetId) return true;
     App.toastFlash('먼저 1단계에서 분석할 데이터셋을 선택하거나 업로드해 주세요.');
     location.href = App.ctx + '/analysis/step1';
     return false;
+    */
   };
   /** 데이터셋 조회 실패(404 등: 세션 만료로 삭제된 경우)를 공통 처리 */
   App.datasetGone = function (e) {
