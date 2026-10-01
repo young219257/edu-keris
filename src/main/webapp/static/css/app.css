@@ -1,0 +1,94 @@
+/* 교육데이터 이용자통계분석 서비스 - 공통 스타일 (React 원본 index.css 이식) */
+:root {
+  --edmgr-navy: #003876;
+  --edmgr-navy-dark: #00224d;
+  --edmgr-navy-light: #004b9e;
+  --edmgr-blue: #2563eb;
+  --edmgr-primary: #1d4ed8;
+  --edmgr-primary-light: #eff6ff;
+  --edmgr-bg: #f8fafc;
+  --edmgr-card: #ffffff;
+  --edmgr-border: #e2e8f0;
+  --edmgr-border-subtle: #f1f5f9;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, "Segoe UI", Roboto, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+  font-size: 13.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.card-modern {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.02), 0 4px 16px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-modern:hover { border-color: rgba(203, 213, 225, 0.9); }
+
+.card-interactive {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-interactive:hover {
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.08);
+}
+
+.divider-subtle { border-color: rgba(241, 245, 249, 0.9); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* 애니메이션 (tailwind animate-in 대체) */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.anim-in { animation: fadeIn .18s ease-out both; }
+.hidden-x { display: none !important; }
+
+/* 표준 통계 결과표 (SPSS 스타일) */
+.std-table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; }
+.std-table th { padding: 8px 12px; font-weight: 700; color: #0f172a; border: 1px solid #cbd5e1; background: #f1f5f9; text-align: center; white-space: nowrap; letter-spacing: -0.01em; }
+.std-table td { padding: 7px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #1e293b; border: 1px solid rgba(226, 232, 240, 0.95); }
+.std-table td.l { font-family: inherit; text-align: left; }
+.std-table td.c { text-align: center; font-family: inherit; }
+.std-table td.r { text-align: right; }
+.std-table td.b { font-weight: 700; color: #0f172a; }
+.std-table td.sig { font-weight: 700; color: #1d4ed8; }
+.std-table tbody tr:hover td { background: rgba(239, 246, 255, 0.5); }
+
+/* 의사결정나무 다이어그램 */
+.tree-wrap { display: flex; flex-direction: column; align-items: center; }
+.tree-children { display: flex; justify-content: center; gap: 24px; position: relative; padding-top: 12px; }
+.tree-children::before { content: ""; position: absolute; top: 0; left: 25%; right: 25%; height: 2px; background: #cbd5e1; }
+.tree-child { display: flex; flex-direction: column; align-items: center; position: relative; }
+.tree-child::before { content: ""; width: 2px; height: 10px; background: #cbd5e1; }
+.tree-stem { width: 2px; height: 12px; background: #cbd5e1; }
+
+/* 스피너 */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+.line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 차트 캔버스 */
+.chart-box { position: relative; width: 100%; }
+canvas { max-width: 100%; }
+
+/* 인쇄 */
+@media print {
+  header, nav, aside, footer, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+}
