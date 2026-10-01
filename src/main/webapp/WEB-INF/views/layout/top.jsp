@@ -12,10 +12,13 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="${ctx}/static/css/app.css">
-  <!-- 폐쇄망 배포를 위해 라이브러리를 /static/vendor 에 포함 (Tailwind v4 browser build, Chart.js, Lucide) -->
+  <!-- 폐쇄망 배포를 위해 라이브러리를 /static/vendor 에 포함 (Tailwind v4 browser build, Highcharts, Lucide) -->
   <script src="${ctx}/static/vendor/tailwind-browser.js"></script>
   <script src="${ctx}/static/vendor/lucide.min.js"></script>
-  <script src="${ctx}/static/vendor/chart.umd.min.js"></script>
+  <script src="${ctx}/static/vendor/highcharts.js"></script>
+  <script src="${ctx}/static/vendor/highcharts-more.js"></script>
+  <script src="${ctx}/static/vendor/heatmap.js"></script>
+  <script src="${ctx}/static/vendor/exporting.js"></script>
 </head>
 <body class="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-900 antialiased">
 

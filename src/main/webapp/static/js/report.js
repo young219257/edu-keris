@@ -29,7 +29,7 @@
     var failed = r.status === 'failed';
     A.$('#rp-diag').innerHTML = '<div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100"><div class="flex items-center gap-2">' + A.icon(failed ? 'alert-triangle' : 'file-text', 'w-4 h-4 ' + (failed ? 'text-rose-600' : 'text-blue-600')) + '<h4 class="text-xs font-bold text-slate-900">분석 결과 요약</h4>' +
       '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + (failed ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200') + '">' + A.esc(r.status) + '</span></div>' +
-      '<div class="text-[10px] text-slate-500 font-mono">' + A.esc(r.id) + ' · 데이터셋 ' + A.esc(r.dataset_id) + ' · ' + A.date(r.completed_at || r.created_at) + (r.duration_ms !== null && r.duration_ms !== undefined ? ' · ' + A.num(r.duration_ms) + 'ms' : '') + '</div></div>' +
+      '<div class="text-[10px] text-slate-500 font-mono">' + A.date(r.completed_at || r.created_at) + (r.duration_ms !== null && r.duration_ms !== undefined ? ' · ' + A.num(r.duration_ms) + 'ms' : '') + '</div></div>' +
       (r.error ? '<div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '') +
       (A.viz.metricsGrid(r.metrics, 24) || '<div class="text-xs text-slate-400">스칼라 지표가 없습니다. \'상세 결과표\' 탭을 확인하세요.</div>');
     A.charts.gallery(A.$('#rp-charts'), r);
@@ -59,11 +59,26 @@
       if (res) A.saveText('analysis_' + res.id + '.json', JSON.stringify(res, null, 2));
     });
     function chartImages() {
-      // 화면에 그려진 차트(canvas)를 PNG 로 캡처해 PDF 에 삽입
-      return A.$$('#rp-charts canvas').map(function (cv) {
-        var card = cv.closest('.rounded-xl'), h = card && card.querySelector('h5');
-        try { return { title: h ? h.textContent : '', data: cv.toDataURL('image/png') }; } catch (e) { return null; }
-      }).filter(Boolean);
+      // 화면에 그려진 Highcharts 차트(SVG)를 PNG 로 변환해 PDF 에 삽입
+      var root = A.$('#rp-charts');
+      var charts = ((window.Highcharts && Highcharts.charts) || []).filter(function (c) { return c && root.contains(c.container); });
+      return Promise.all(charts.map(function (c) {
+        var card = c.container.closest('.rounded-xl'), h = card && card.querySelector('h5');
+        return new Promise(function (resolve) {
+          try {
+            var svg = c.getSVG({ chart: { backgroundColor: '#ffffff' } });
+            var img = new Image();
+            img.onload = function () {
+              var canvas = document.createElement('canvas');
+              canvas.width = img.width; canvas.height = img.height;
+              canvas.getContext('2d').drawImage(img, 0, 0);
+              resolve({ title: h ? h.textContent : '', data: canvas.toDataURL('image/png') });
+            };
+            img.onerror = function () { resolve(null); };
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+          } catch (e) { resolve(null); }
+        });
+      })).then(function (arr) { return arr.filter(Boolean); });
     }
     function exportFile(btn, method, url, body, fallback) {
       var label = btn.innerHTML;
@@ -74,7 +89,11 @@
         .then(function () { btn.disabled = false; btn.innerHTML = label; A.icons(); });
     }
     A.$('#btn-pdf').addEventListener('click', function () {
-      if (res) exportFile(this, 'POST', '/export/analysis/' + encodeURIComponent(res.id) + '/pdf', { images: chartImages() }, 'analysis_' + res.id + '.pdf');
+      if (!res) return;
+      var btn = this;
+      chartImages().then(function (images) {
+        exportFile(btn, 'POST', '/export/analysis/' + encodeURIComponent(res.id) + '/pdf', { images: images }, 'analysis_' + res.id + '.pdf');
+      });
     });
     A.$('#btn-xlsx').addEventListener('click', function () {
       if (res) exportFile(this, 'GET', '/export/analysis/' + encodeURIComponent(res.id) + '/excel', null, 'analysis_' + res.id + '.xlsx');

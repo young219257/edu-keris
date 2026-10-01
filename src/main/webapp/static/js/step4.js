@@ -154,11 +154,10 @@
       return;
     }
     var r = analysis, st = STATUS[r.status] || STATUS.pending, m = meta(r.method);
-    var err = r.error ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '';
+    var err = (r.status === 'failed') ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.</div>' : '';
     p.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2.5">' +
       '<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center shrink-0">' + A.icon('sparkles', 'w-4 h-4') + '</div><div><div class="flex items-center gap-2"><h4 class="text-xs font-bold text-slate-900">' + A.esc(m.name) + ' 연산 결과</h4>' +
-      '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.esc(r.id) + ' · ' + A.date(r.completed_at || r.created_at) + (r.duration_ms !== null && r.duration_ms !== undefined ? ' · ' + A.num(r.duration_ms) + 'ms' : '') + '</div></div></div>' +
-      (ok ? '<a href="' + A.ctx + '/analysis/step4/report" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5">' + A.icon('bar-chart-3', 'w-3.5 h-3.5') + '차트·상세 결과</a>' : '') + '</div>' + err;
+      '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.date(r.completed_at || r.created_at) + '</div></div></div></div>' + err;
     A.icons();
   }
 
@@ -189,7 +188,7 @@
       analysis = r;
       A.saveState({ analysisId: r.id });
       renderResult();
-      if (r.status === 'failed') A.toast('분석에 실패했습니다: ' + (r.error || ''), 'error');
+      if (r.status === 'failed') A.toast('분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.', 'error');
       else A.toast('분석 모델 연산이 완료되었습니다. (' + m.name + ')');
     }).catch(function (e) { A.toast(e.message, 'error'); }).then(function () {
       running = false;

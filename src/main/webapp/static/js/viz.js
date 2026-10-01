@@ -25,12 +25,20 @@
   };
   V.isPrim = function (v) { return v === null || typeof v !== 'object'; };
 
+  var P_KEYS = ['p_value', 'f_pvalue', 'pvalue'];
+  function stars(p) { return p < 0.001 ? '***' : p < 0.01 ? '**' : p < 0.05 ? '*' : ''; }
+
   /** 스칼라 값만 카드로 (중첩 객체는 제외) */
   V.metricsGrid = function (obj, limit) {
     var keys = Object.keys(obj || {}).filter(function (k) { return V.isPrim(obj[k]); }).slice(0, limit || 16);
     if (!keys.length) return '';
-    return '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">' + keys.map(function (k, i) {
-      return '<div class="bg-slate-50 rounded-lg p-2.5 border border-slate-200/80"><div class="text-[10px] font-medium text-slate-500 truncate" title="' + A.esc(k) + '">' + A.esc(V.label(k)) + '</div><div class="text-sm font-bold mt-0.5 font-mono ' + (i === 0 ? 'text-blue-700' : 'text-slate-900') + '">' + V.fmt(obj[k]) + '</div></div>';
+    return '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">' + keys.map(function (k, i) {
+      var v = obj[k], isP = P_KEYS.indexOf(k) >= 0 && typeof v === 'number';
+      var text = V.fmt(v) + (isP ? stars(v) : '');
+      var hi = i === 0;
+      return '<div class="rounded-xl p-3 border transition-shadow hover:shadow-sm ' + (hi ? 'bg-blue-50/70 border-blue-200' : 'bg-slate-50 border-slate-200/80') + '">' +
+        '<div class="text-[10px] font-semibold uppercase tracking-wide truncate ' + (hi ? 'text-blue-700/80' : 'text-slate-400') + '" title="' + A.esc(k) + '">' + A.esc(V.label(k)) + '</div>' +
+        '<div class="text-base font-extrabold mt-1 font-mono ' + (hi ? 'text-blue-800' : 'text-slate-900') + '">' + text + '</div></div>';
     }).join('') + '</div>';
   };
 
@@ -41,12 +49,12 @@
     var cols = [];
     rows.slice(0, 30).forEach(function (r) { Object.keys(r || {}).forEach(function (k) { if (cols.indexOf(k) < 0) cols.push(k); }); });
     var shown = rows.slice(0, maxRows || 200);
-    return '<div class="overflow-x-auto max-h-80 overflow-y-auto border border-slate-200 rounded-lg"><table class="w-full text-[11px] text-left"><thead class="bg-slate-50 sticky top-0"><tr>' +
-      cols.map(function (c) { return '<th class="py-1.5 px-2.5 font-semibold text-slate-600 whitespace-nowrap">' + A.esc(V.label(c)) + '</th>'; }).join('') + '</tr></thead><tbody class="divide-y divide-slate-100 font-mono">' +
-      shown.map(function (r) {
-        return '<tr class="hover:bg-slate-50/70">' + cols.map(function (c) {
+    return '<div class="overflow-x-auto max-h-80 overflow-y-auto border border-slate-200 rounded-xl"><table class="w-full text-[11px] text-left border-collapse"><thead class="bg-slate-100/90 sticky top-0"><tr>' +
+      cols.map(function (c) { return '<th class="py-2 px-2.5 font-bold text-slate-700 whitespace-nowrap border-b border-slate-200">' + A.esc(V.label(c)) + '</th>'; }).join('') + '</tr></thead><tbody class="font-mono">' +
+      shown.map(function (r, i) {
+        return '<tr class="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition-colors ' + (i % 2 ? 'bg-slate-50/50' : 'bg-white') + '">' + cols.map(function (c) {
           var v = r[c];
-          return '<td class="py-1 px-2.5 whitespace-nowrap text-slate-700">' + (V.isPrim(v) ? V.fmt(v) : '<span class="text-slate-400">' + A.esc(JSON.stringify(v).slice(0, 60)) + '</span>') + '</td>';
+          return '<td class="py-1.5 px-2.5 whitespace-nowrap text-slate-700">' + (V.isPrim(v) ? V.fmt(v) : '<span class="text-slate-400">' + A.esc(JSON.stringify(v).slice(0, 60)) + '</span>') + '</td>';
         }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>' + (rows.length > shown.length ? '<div class="text-[10px] text-slate-400 mt-1">상위 ' + shown.length + ' / ' + rows.length + '행 표시</div>' : '');
   };
