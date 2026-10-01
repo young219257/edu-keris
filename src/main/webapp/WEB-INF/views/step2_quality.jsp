@@ -52,7 +52,6 @@
       <div class="card-modern p-4"><span class="text-xs font-medium text-slate-400 block" id="card-out-label">이상치 검출</span><span class="text-lg font-bold font-mono mt-0.5 block" id="card-outliers">-</span></div>
       <div class="card-modern p-4"><span class="text-xs font-medium text-slate-400 block">중복 행</span><span class="text-lg font-bold font-mono mt-0.5 block" id="card-dups">-</span></div>
     </div>
-    <div id="warn-box" class="hidden text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1"></div>
 
     <div class="card-modern p-5">
       <div class="pb-3 border-b border-slate-100 mb-3 flex items-center justify-between">
@@ -87,7 +86,6 @@
       </span>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="strategy-grid"></div>
-    <div id="prep-summary" class="hidden text-[11px] text-slate-600 bg-emerald-50/60 border border-emerald-200 rounded-lg p-3"></div>
   </div>
 
   <div class="flex items-center justify-between pt-2">

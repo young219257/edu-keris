@@ -49,7 +49,6 @@
   }
   function persist() {
     A.saveState({ preprocessing: buildSpec(), prepUi: { outlier: { method: sel.method, threshold: sel.threshold }, prep: pcfg } });
-    showSummary();
   }
 
   /* ---------------- 알고리즘 카드 ---------------- */
@@ -87,10 +86,6 @@
     var cd = A.$('#card-dups');
     cd.textContent = A.num(profile.n_duplicated_rows) + '행';
     cd.className = 'text-lg font-bold font-mono mt-0.5 block ' + (profile.n_duplicated_rows > 0 ? 'text-amber-600' : 'text-slate-900');
-    var wb = A.$('#warn-box');
-    var warns = profile.warnings || [];
-    wb.classList.toggle('hidden', !warns.length);
-    wb.innerHTML = warns.map(function (w) { return '<div>⚠ ' + A.esc(w) + '</div>'; }).join('');
     A.$('#applied-name').textContent = a.name;
     A.$('#applied-formula').textContent = a.formula;
     A.$('#th-out').textContent = '이상치 (' + a.name + ')';
@@ -143,19 +138,6 @@
     }).join('');
   }
 
-  function label(k, v) {
-    var g = STRATS[k];
-    var o = g.opts.filter(function (x) { return x[0] === v; })[0];
-    return o ? o[1] : String(v);
-  }
-  function showSummary() {
-    var el = A.$('#prep-summary');
-    el.classList.remove('hidden');
-    el.innerHTML = '<strong class="text-emerald-800">저장된 전처리 규칙</strong> · 결측: ' + A.esc(label('missing_strategy', pcfg.missing_strategy)) + ' · 이상치: ' + A.esc(label('outlier_treatment', pcfg.outlier_treatment)) + ' (' + A.esc(algo(sel.method).name) + ', 임계 ' + sel.threshold + ')' +
-      ' · 스케일링: ' + A.esc(label('scaling', pcfg.scaling)) + ' · 중복: ' + A.esc(label('drop_duplicates', pcfg.drop_duplicates)) +
-      '<div class="text-[10px] text-slate-500 mt-1">이 규칙은 4단계 분석 실행 시 <span class="font-mono">preprocessing</span> 항목으로 API에 전달됩니다.</div>';
-  }
-
   function runDetect() {
     return A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/profile' + A.qs({ outlier_method: sel.method, outlier_threshold: sel.threshold })).then(function (p) {
       profile = p;
@@ -168,7 +150,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     renderAlgos();
     renderStrategies();
-    showSummary();
     A.$('#algo-grid').addEventListener('click', function (e) {
       if (e.target.closest('select')) return;
       var c = e.target.closest('[data-algo]');

@@ -5,7 +5,7 @@
 
   var ROLES = [['numeric', '수치형 (Numeric)'], ['categorical', '범주형 (Categorical)'], ['boolean', '논리형 (Boolean)'], ['datetime', '일시형 (Datetime)'], ['text', '문자형 (Text)'], ['identifier', '식별자 (Identifier)'], ['constant', '상수 (Constant)']];
   var PAGE = 20;
-  var ALLOWED = /\.(csv|tsv|txt|xlsx|xls|json|parquet)$/i;
+  var ALLOWED = /\.(csv|txt|xlsx|xls|json|parquet)$/i;
 
   var current = null;                       // DatasetDetail (컬럼 포함)
   var datasets = [];                        // 세션에 반입된 데이터셋 (upload / merged)
@@ -77,9 +77,9 @@
       html = '<div class="border-2 border-dashed border-blue-300 bg-blue-50/40 p-8 rounded-2xl text-center text-xs text-blue-800 font-semibold flex items-center justify-center gap-2"><span class="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full spin inline-block"></span>파일을 분석하고 있습니다...</div>';
     } else {
       html = '<label id="dropzone" class="block border-2 border-dashed p-8 rounded-2xl transition-all cursor-pointer text-center ' + (dragging ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-blue-400 bg-slate-50/40 hover:bg-blue-50/20') + '">' +
-        '<input type="file" accept=".csv,.tsv,.txt,.xlsx,.xls,.json,.parquet" class="hidden" id="file-input">' +
+        '<input type="file" accept=".csv,.txt,.xlsx,.xls,.json,.parquet" class="hidden" id="file-input">' +
         '<div class="flex flex-col items-center justify-center space-y-2.5"><div class="w-10 h-10 rounded-2xl bg-white text-blue-600 flex items-center justify-center border border-slate-200 shadow-2xs">' + A.icon('upload', 'w-5 h-5') + '</div>' +
-        '<div><div class="text-xs font-bold text-slate-800">클릭하여 파일 선택 또는 여기로 드래그 앤 드롭</div><div class="text-[11px] text-slate-400 mt-1" id="upload-limit">인코딩·구분자·변수 역할을 자동으로 판별합니다.</div></div></div>' +
+        '<div><div class="text-xs font-bold text-slate-800">클릭하여 파일 선택 또는 여기로 드래그 앤 드롭</div><div class="text-[11px] text-slate-400 mt-1" id="upload-limit">인코딩·구분자·타입을 자동으로 판별합니다.</div></div></div>' +
         (uploadError ? '<div class="mt-3 text-xs font-semibold text-rose-700 bg-rose-50 p-2 rounded-lg border border-rose-200">' + A.esc(uploadError) + '</div>' : '') + '</label>';
     }
     A.$('#upload-area').innerHTML = html;
@@ -87,7 +87,7 @@
   }
 
   function handleFile(file) {
-    if (!ALLOWED.test(file.name)) { uploadError = '지원하지 않는 파일 형식입니다. (CSV, TSV, XLSX, JSON 등)'; renderUpload(); return; }
+    if (!ALLOWED.test(file.name)) { uploadError = '지원하지 않는 파일 형식입니다. (CSV, XLSX, JSON 등)'; renderUpload(); return; }
     uploadError = null;
     uploading = true;
     renderUpload();
@@ -118,10 +118,11 @@
     var cols = current.columns || [];
     A.$('#col-title').textContent = '변수 속성 및 데이터 타입 정의 (' + cols.length + '개 변수)';
     A.$('#col-dsname').textContent = current.name;
+    var editable = current.source_type === 'upload';
     body.innerHTML = cols.filter(function (c) { return c.name.toLowerCase().indexOf(q) >= 0; }).map(function (c) {
       return '<tr class="hover:bg-slate-50/70 transition-colors"><td class="py-2 px-4 font-mono font-semibold text-slate-800">' + A.esc(c.name) + '</td><td class="py-2 px-4 text-slate-500 font-mono">' + A.esc(c.dtype) + '</td>' +
         '<td class="py-2 px-4 text-right font-mono ' + (c.n_missing > 0 ? 'text-amber-600 font-bold' : 'text-slate-400') + '">' + A.num(c.n_missing) + '</td><td class="py-2 px-4 text-right font-mono text-slate-500">' + A.num(c.n_unique) + '</td>' +
-        '<td class="py-2 px-4"><select data-col="' + A.esc(c.name) + '" class="bg-white border border-slate-200 rounded-md px-2 py-1 text-xs text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer">' +
+        '<td class="py-2 px-4"><select data-col="' + A.esc(c.name) + '"' + (editable ? '' : ' disabled title="데이터관리카드/병합 데이터셋은 타입을 변경할 수 없습니다. 직접 업로드한 파일만 변경 가능합니다."') + ' class="bg-white border border-slate-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:border-blue-600 ' + (editable ? 'text-slate-800 cursor-pointer' : 'text-slate-400 bg-slate-50 cursor-not-allowed') + '">' +
         ROLES.map(function (o) { return '<option value="' + o[0] + '"' + (c.role === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></td></tr>';
     }).join('');
   }
@@ -219,7 +220,7 @@
 
     A.$('#col-body').addEventListener('change', function (e) {
       var sel = e.target.closest('select[data-col]');
-      if (!sel || !current) return;
+      if (!sel || !current || current.source_type !== 'upload') return;
       A.patch('/api/v1/datasets/' + encodeURIComponent(current.id) + '/columns/types', { columns: [{ name: sel.getAttribute('data-col'), role: sel.value }] }).then(function (d) {
         current = d;
         renderColumns();
@@ -241,13 +242,11 @@
     renderColumns();
     A.get('/api/v1/datasets/meta/limits').then(function (l) {
       var el = A.$('#upload-limit');
-      if (el && l) el.textContent = '인코딩·구분자·변수 역할 자동 판별 · ' + Object.keys(l).map(function (k) { return k + ': ' + l[k]; }).join(' · ');
+      if (el && l) el.textContent = '인코딩·구분자·타입 자동 판별 · ' + Object.keys(l).map(function (k) { return k + ': ' + l[k]; }).join(' · ');
     }).catch(function () { /* ignore */ });
 
-    // 초기 로딩: 카드/데이터셋 목록 + 이전에 선택한 데이터셋 복원
-    Promise.all([loadCards(), loadDatasets()]).then(function () {
-      if (A.state.datasetId) return select(A.state.datasetId).then(function () { if (!current) A.saveState({ datasetId: null }); });
-    }).then(renderAll);
+    // 초기 로딩: 카드/데이터셋 목록만 불러온다. 이전 선택은 복원하지 않고 매번 '선택 안 됨'을 기본값으로 둔다.
+    Promise.all([loadCards(), loadDatasets()]).then(renderAll);
     A.icons();
   });
 })();

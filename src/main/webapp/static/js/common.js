@@ -75,8 +75,19 @@
     try { sessionStorage.removeItem(STATE_KEY); } catch (e) { /* ignore */ }
   };
 
-  /* ------------------------------------------------------------ 세션 토큰 + API 클라이언트 */
-  var session = readJson(TOKEN_KEY);              // { token, header }
+  /* ------------------------------------------------------------ 세션 토큰 (쿠키 저장) + API 클라이언트 */
+  function getCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1') + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function setCookie(name, value) {
+    document.cookie = name + '=' + encodeURIComponent(value) + '; path=' + (App.ctx || '/') + '; SameSite=Lax';
+  }
+  function readCookieJson(name) {
+    try { return JSON.parse(getCookie(name) || 'null'); } catch (e) { return null; }
+  }
+
+  var session = readCookieJson(TOKEN_KEY);        // { token, header }
   var issuing = null;
 
   function errMsg(body, status) {
@@ -87,7 +98,7 @@
     return '요청 처리에 실패했습니다. (' + status + ')';
   }
 
-  /** POST /api/v1/sessions — 토큰 발급 (탭 단위로 sessionStorage 에 보관) */
+  /** POST /api/v1/sessions — 토큰 발급 (쿠키에 보관, 브라우저의 모든 탭이 공유) */
   App.ensureSession = function (force) {
     if (session && session.token && !force) return Promise.resolve(session);
     if (issuing) return issuing;
@@ -96,7 +107,7 @@
         return res.json().catch(function () { return null; }).then(function (j) {
           if (!res.ok || !j || !j.session_token) throw new Error(errMsg(j, res.status));
           session = { token: j.session_token, header: j.token_header || 'X-Session-Token' };
-          try { sessionStorage.setItem(TOKEN_KEY, JSON.stringify(session)); } catch (e) { /* ignore */ }
+          try { setCookie(TOKEN_KEY, JSON.stringify(session)); } catch (e) { /* ignore */ }
           if (force) App.resetState();
           return session;
         });
