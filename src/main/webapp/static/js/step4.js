@@ -149,17 +149,16 @@
     A.$('#fit-badge').classList.toggle('hidden', !ok);
     A.$('#fit-badge').classList.toggle('flex', !!ok);
     if (!analysis) {
-      p.innerHTML = '<div class="py-20 text-center text-slate-400 space-y-2">' + A.icon('cpu', 'w-8 h-8 mx-auto text-slate-300') + '<div class="text-xs font-semibold text-slate-600">분석이 아직 실행되지 않았습니다.</div><div class="text-[11px]">좌측에서 변수를 설정하고 \'통계 모델 분석 실행\'을 클릭하세요.</div></div>';
+      p.innerHTML = '<div class="py-6 text-center text-slate-400 space-y-2">' + A.icon('cpu', 'w-8 h-8 mx-auto text-slate-300') + '<div class="text-xs font-semibold text-slate-600">분석이 아직 실행되지 않았습니다.</div><div class="text-[11px]">위에서 변수를 설정하고 \'통계 모델 분석 실행\'을 클릭하세요.</div></div>';
       A.icons();
       return;
     }
     var r = analysis, st = STATUS[r.status] || STATUS.pending, m = meta(r.method);
-    var err = r.error ? '<div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '';
-    p.innerHTML = '<div class="space-y-4"><div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100"><div class="flex items-center gap-2.5">' +
+    var err = r.error ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '';
+    p.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2.5">' +
       '<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center shrink-0">' + A.icon('sparkles', 'w-4 h-4') + '</div><div><div class="flex items-center gap-2"><h4 class="text-xs font-bold text-slate-900">' + A.esc(m.name) + ' 연산 결과</h4>' +
       '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.esc(r.id) + ' · ' + A.date(r.completed_at || r.created_at) + (r.duration_ms !== null && r.duration_ms !== undefined ? ' · ' + A.num(r.duration_ms) + 'ms' : '') + '</div></div></div>' +
-      '<a href="' + A.ctx + '/analysis/step4/report" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5">' + A.icon('bar-chart-3', 'w-3.5 h-3.5') + '차트·상세 결과</a></div>' + err +
-      (ok ? '<div><div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">' + A.icon('award', 'w-3.5 h-3.5 text-blue-600') + '<span>핵심 모형 적합도 및 검정 통계량</span></div>' + (A.viz.metricsGrid(r.metrics, 12) || '<div class="text-xs text-slate-400">표시할 스칼라 지표가 없습니다. 상세 결과에서 전체 내용을 확인하세요.</div>') + '</div>' : '') + '</div>';
+      (ok ? '<a href="' + A.ctx + '/analysis/step4/report" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5">' + A.icon('bar-chart-3', 'w-3.5 h-3.5') + '차트·상세 결과</a>' : '') + '</div>' + err;
     A.icons();
   }
 
