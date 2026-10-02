@@ -33,7 +33,7 @@
           <i data-lucide="check" class="w-3 h-3"></i> 이상치 탐지 완료!
         </span>
       </div>
-      <button type="button" id="btn-detect" class="px-4 py-2 bg-[#003876] hover:bg-[#002855] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-1.5 shrink-0">
+      <button type="button" id="btn-detect" disabled class="px-4 py-2 bg-[#003876] hover:bg-[#002855] disabled:bg-slate-400 disabled:hover:bg-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-1.5 shrink-0">
         <i data-lucide="shield-check" class="w-4 h-4"></i><span>선택 기법으로 이상치 탐지 실행</span>
       </button>
     </div>

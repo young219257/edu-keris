@@ -74,9 +74,18 @@
           a.opts.map(function (o) { return '<option value="' + o[0] + '"' + (Number(on ? sel.threshold : a.def) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>';
     }).join('');
     var a = algo(sel.method);
-    var nm = A.$('#algo-sel-name');
-    nm.textContent = a ? a.name : '-';
-    nm.className = 'text-blue-700 font-bold';
+    A.$('#algo-sel-name').textContent = a ? a.name : '-';
+    syncDetectBtn();
+  }
+  /** 탐지 실행 버튼: 데이터(프로파일) 로드가 끝나고 기법을 선택했을 때만 활성. 탐지 중에도 비활성 */
+  var detecting = false;
+  function syncDetectBtn() {
+    var b = A.$('#btn-detect');
+    b.disabled = detecting || !profile || !sel.method;
+    b.title = !profile ? '데이터를 불러오는 중입니다' : !sel.method ? '위 카드에서 탐지 기법을 선택하세요' : '';
+    if (detecting) return;   // 탐지 중에는 '알고리즘 연산 중...' 표시 유지
+    var label = b.querySelector('span');
+    if (label) label.textContent = !profile ? '데이터 불러오는 중...' : '선택 기법으로 이상치 탐지 실행';
   }
 
   /* ---------------- 진단 결과 ---------------- */
@@ -184,21 +193,15 @@
     });
     A.$('#btn-detect').addEventListener('click', function () {
       var b = this;
-      if (!profile) return;
-      if (!sel.method) {   // 버튼은 항상 활성. 기법을 고르지 않았으면 안내만 표시
-        var nm = A.$('#algo-sel-name');
-        nm.textContent = '위 카드에서 탐지 기법을 먼저 선택하세요';
-        nm.className = 'text-rose-600 font-bold';
-        return;
-      }
-      b.disabled = true;
+      if (!profile || !sel.method || detecting) return;
+      detecting = true; syncDetectBtn();
       b.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full spin inline-block"></span><span>알고리즘 연산 중...</span>';
       runDetect().then(function () {
         var ok = A.$('#detect-ok');
         ok.classList.remove('hidden'); ok.classList.add('flex');
         setTimeout(function () { ok.classList.add('hidden'); ok.classList.remove('flex'); }, 3000);
       }).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); }).then(function () {
-        b.disabled = false;
+        detecting = false; syncDetectBtn();
         b.innerHTML = A.icon('shield-check', 'w-4 h-4') + '<span>선택 기법으로 이상치 탐지 실행</span>';
         A.icons();
       });

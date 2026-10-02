@@ -772,8 +772,7 @@
     A.$('#rp-title').textContent = r.name;
     A.$('#btn-save').classList.remove('hidden'); A.$('#btn-save').classList.add('flex');
     var failed = r.status === 'failed';
-    A.$('#rp-diag').innerHTML = '<div class="flex items-center gap-2 pb-2 border-b border-slate-100">' + A.icon(failed ? 'alert-triangle' : 'file-text', 'w-4 h-4 ' + (failed ? 'text-rose-600' : 'text-blue-600')) + '<h4 class="text-xs font-bold text-slate-900">분석 결과 요약</h4>' +
-      '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + (failed ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200') + '">' + A.esc(r.status) + '</span></div>' +
+    A.$('#rp-diag').innerHTML = '<div class="flex items-center gap-2 pb-2 border-b border-slate-100">' + A.icon(failed ? 'alert-triangle' : 'file-text', 'w-4 h-4 ' + (failed ? 'text-rose-600' : 'text-blue-600')) + '<h4 class="text-xs font-bold text-slate-900">분석 결과 요약</h4></div>' +
       (r.error ? '<div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-mono whitespace-pre-wrap">' + A.esc(r.error) + '</div>' : '') +
       (renderSummaryCards(r.metrics || {}, r.result || {}) || A.viz.metricsGrid(r.metrics, 24) || '<div class="text-xs text-slate-400">표시할 스칼라 지표가 없습니다. \'표준 통계 결과표\' 탭을 확인하세요.</div>');
     renderResultTab();

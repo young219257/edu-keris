@@ -233,9 +233,23 @@
 
   /** 막대: encoding 의 x/y 중 문자열 쪽을 범주, 수치 쪽을 값으로. 객체 값(z_means 등)은 범주×그룹 묶음 막대.
    *  options: sort, error_bars[lo,hi], reference_line, format(percent), diverging. color 가 불리언이면 유의/비유의 색 구분 */
-  function planBar(rec, data, uid) {
+  /** 다중 분류 로지스틱: 서버가 chart_data.coefficients 를 빈 배열로 주므로 result.coefficients[{class, terms[{term, odds_ratio}]}] 로 범주별 오즈비 묶음 막대를 그린다 */
+  function planMultinomialOdds(rec, uid, ctx) {
+    var rc = ctx.result && ctx.result.coefficients;
+    if (rec.data_key !== 'coefficients' || !Array.isArray(rc) || !rc.length || !Array.isArray(rc[0].terms)) return null;
+    var terms = rc[0].terms.map(function (t) { return t.term; });
+    var ref = isNum(opt(rec).reference_line) ? opt(rec).reference_line : 1;
+    return { html: sized(uid, Math.max(256, terms.length * rc.length * 16 + 90)), draw: function (el) {
+      return Highcharts.chart(el, baseHc('bar', { legend: { enabled: true }, xAxis: { categories: terms },
+        yAxis: { title: { text: '오즈비 (Exp(B))' }, plotLines: [{ value: ref, color: '#64748b', width: 1, dashStyle: 'Dash', zIndex: 3, label: { text: '기준 ' + ref, style: { fontSize: '10px', color: '#64748b' } } }] },
+        tooltip: { shared: true, valueDecimals: 3 },
+        series: rc.map(function (c, i) { return { name: '범주 ' + c.class, color: PALETTE[i % PALETTE.length], data: terms.map(function (t) { var x = c.terms.filter(function (y) { return y.term === t; })[0]; return x ? fx(x.odds_ratio) : null; }) }; }) }));
+    } };
+  }
+
+  function planBar(rec, data, uid, ctx) {
     var rows = rowsOf(data), e = enc(rec), o = opt(rec);
-    if (!rows) return null;
+    if (!rows) return planMultinomialOdds(rec, uid, ctx || {});
     var f0 = rows[0], isPctFmt = o.format === 'percent';
     var valFmt = function (v) { return isPctFmt ? pct(v) : fx(v); };
     var ref = isNum(o.reference_line) ? [{ value: o.reference_line, color: '#64748b', width: 1, dashStyle: 'Dash', zIndex: 3 }] : [];
@@ -551,14 +565,21 @@
     return null;
   }
 
+  function recTitle(rec) { return !rec.title || rec.title === rec.kind ? (KIND_LABEL[rec.kind] || rec.kind) : rec.title; }
+  /** 서버가 추천만 하고 데이터를 주지 않은 경우의 안내 */
+  function noDataMsg(rec, ctx) {
+    if (rec.kind === 'roc_curve' && ctx && ctx.result && ctx.result.binary === false) return '다중 분류(3개 이상 범주) 모형은 서버가 ROC 곡선 데이터를 제공하지 않습니다.<br>분류 성능은 혼동행렬을 참고하세요.';
+    return '서버 응답에 이 차트의 데이터(chart_data' + (rec.data_key ? '.' + A.esc(rec.data_key) : '') + ')가 포함되지 않았습니다.';
+  }
+
   function card(rec, idx, data, ctx) {
     var uid = 'ch-' + idx, p = null, body, raw = '';
     try { p = plan(rec, data, uid, ctx); } catch (e) { p = null; }
     if (p) body = p.html;
-    else if (data === undefined || data === null || (Array.isArray(data) && !data.length)) body = '<div class="py-8 text-center text-xs text-slate-400">이 차트에 대한 데이터(chart_data' + (rec.data_key ? '.' + A.esc(rec.data_key) : '') + ')가 없습니다.</div>';
+    else if (data === undefined || data === null || (Array.isArray(data) && !data.length)) body = '<div class="py-8 text-center text-xs text-slate-400 leading-relaxed">' + noDataMsg(rec, ctx) + '</div>';
     else body = '<div class="text-[11px] text-slate-500 mb-1.5">차트로 자동 변환할 수 없는 형식이어서 원본 데이터를 표시합니다.</div>' + A.viz.tree(data, 0);
     var badge = '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 shrink-0">' + (idx + 1) + '순위</span>';
-    return { uid: uid, plan: p, html: '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs"><div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><div class="flex items-center gap-1.5">' + badge + '<h5 class="text-xs font-bold text-slate-900 truncate">Figure ' + (idx + 1) + '. ' + A.esc(rec.title) + '</h5></div><p class="text-[11px] text-slate-500 mt-0.5">' + A.esc(rec.reason) + '</p></div><span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">' + A.esc(KIND_LABEL[rec.kind] || rec.kind) + '</span></div>' + body + raw + '</div>' };
+    return { uid: uid, plan: p, html: '<div class="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs"><div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><div class="flex items-center gap-1.5">' + badge + '<h5 class="text-xs font-bold text-slate-900 truncate">Figure ' + (idx + 1) + '. ' + A.esc(recTitle(rec)) + '</h5></div><p class="text-[11px] text-slate-500 mt-0.5">' + A.esc(rec.reason) + '</p></div><span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">' + A.esc(KIND_LABEL[rec.kind] || rec.kind) + '</span></div>' + body + raw + '</div>' };
   }
 
   function recData(r, cd) {
@@ -637,7 +658,7 @@
     var r = st.recs[st.idx], data = recData(r, st.cd), uid = 'ch-detail-' + st.idx, p = null;
     try { p = plan(r, data, uid, st.ctx); } catch (e) { p = null; }
     var body = p ? p.html : (data === undefined || data === null || (Array.isArray(data) && !data.length))
-      ? '<div class="py-24 text-center text-xs text-slate-400">이 차트에 대한 데이터가 없습니다.</div>'
+      ? '<div class="py-24 text-center text-xs text-slate-400 leading-relaxed">' + noDataMsg(r, st.ctx) + '</div>'
       : '<div class="text-[11px] text-slate-500 mb-1.5">차트로 자동 변환할 수 없는 형식이어서 원본 데이터를 표시합니다.</div>' + A.viz.tree(data, 0);
     var f = footInfo(data, st.ctx), n = st.recs.length;
     var navBtn = function (dir, icon, dis) { return '<button type="button" data-cnav="' + dir + '"' + (dis ? ' disabled' : '') + ' class="p-1.5 rounded-lg text-slate-600 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">' + A.icon(icon, 'w-4 h-4') + '</button>'; };
@@ -648,7 +669,7 @@
           '<button type="button" data-cback="1" class="px-4 py-2 bg-[#003876] hover:bg-[#002855] text-white text-sm font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shrink-0">' + A.icon('arrow-left', 'w-4 h-4') + '<span>차트 목록으로</span></button>' +
           '<span class="w-px h-6 bg-slate-200 shrink-0"></span>' +
           '<span class="text-[11px] font-bold px-2 py-1 rounded-md bg-blue-50 text-blue-800 border border-blue-200 shrink-0">추천 ' + (st.idx + 1) + '순위</span>' +
-          '<h4 class="text-base font-bold text-slate-900 truncate">' + A.esc(r.title) + '</h4>' +
+          '<h4 class="text-base font-bold text-slate-900 truncate">' + A.esc(recTitle(r)) + '</h4>' +
         '</div>' +
         '<div class="flex items-center gap-2 shrink-0">' +
           (hasData ? '<button type="button" data-cdata="1" class="px-3.5 py-2 rounded-xl border text-sm font-semibold flex items-center gap-1.5 cursor-pointer ' + (st.showData ? 'bg-blue-50 border-blue-300 text-blue-800' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') + '">' + A.icon(st.showData ? 'x' : 'table', 'w-4 h-4') + '<span>' + (st.showData ? '차트 데이터 닫기' : '차트 데이터 조회') + '</span></button>' : '') +
