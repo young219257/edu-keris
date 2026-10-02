@@ -14,7 +14,7 @@
     A.$('#stat-rows').textContent = A.num(p.n_rows) + '행';
     A.$('#stat-body').innerHTML = nums.map(function (n) {
       var tot = (n.count || 0) + (n.missing || 0), ratio = tot ? (n.missing || 0) / tot * 100 : 0;
-      return '<tr class="transition-colors hover:bg-blue-50/20"><td class="py-2.5 px-3 font-sans font-medium text-slate-800"><span class="truncate max-w-[180px]">' + A.esc(n.column) + '</span></td>' +
+      return '<tr class="transition-colors hover:bg-blue-50/20"><td class="py-2.5 px-3 font-sans font-medium text-slate-800 mx-sticky"><span class="truncate max-w-[180px]">' + A.esc(n.column) + '</span></td>' +
         '<td class="py-2.5 px-2.5 text-right text-slate-700">' + A.num(n.count) + '</td>' +
         '<td class="py-2.5 px-2.5 text-right font-bold text-slate-900">' + A.num(n.mean, 2) + '</td>' +
         '<td class="py-2.5 px-2.5 text-right text-slate-600">' + A.num(n.std, 2) + '</td>' +
@@ -35,9 +35,9 @@
     A.$('#corr-title').textContent = METHOD[c.method] || '상관계수 매트릭스';
     var cols = c.columns || [], m = c.matrix || [];
     if (!cols.length) { A.$('#corr-wrap').innerHTML = '<div class="py-6 text-center text-xs text-slate-400">상관분석이 가능한 수치형 변수가 없습니다.</div>'; A.$('#pairs-wrap').classList.add('hidden'); return; }
-    var head = '<tr class="border-b border-slate-200 text-[11px]"><th class="p-2.5 text-left font-semibold text-slate-600 bg-slate-50/80 rounded-tl-lg">변수</th>' + cols.map(function (l) { return '<th class="p-2.5 font-semibold text-slate-700 truncate max-w-[90px] bg-slate-50/80" title="' + A.esc(l) + '">' + A.esc(l) + '</th>'; }).join('') + '</tr>';
+    var head = '<tr class="border-b border-slate-200 text-[11px]"><th class="p-2.5 text-left font-semibold text-slate-600 bg-slate-50 rounded-tl-lg mx-sticky">변수</th>' + cols.map(function (l) { return '<th class="p-2.5 font-semibold text-slate-700 truncate max-w-[90px] bg-slate-50" title="' + A.esc(l) + '">' + A.esc(l) + '</th>'; }).join('') + '</tr>';
     var body = cols.map(function (rl, i) {
-      return '<tr class="hover:bg-slate-50/50 transition-colors"><td class="p-2.5 text-left font-sans font-medium text-slate-800 truncate max-w-[140px] bg-slate-50/30" title="' + A.esc(rl) + '">' + A.esc(rl) + '</td>' +
+      return '<tr class="hover:bg-slate-50/50 transition-colors"><td class="p-2.5 text-left font-sans font-medium text-slate-800 truncate max-w-[140px] mx-sticky" title="' + A.esc(rl) + '">' + A.esc(rl) + '</td>' +
         cols.map(function (cl, j) {
           var v = (m[i] || [])[j];
           if (v === null || v === undefined) return '<td class="p-2.5 text-slate-300">-</td>';
@@ -50,7 +50,7 @@
           return '<td class="p-2.5 ' + cls + '">' + t + '</td>';
         }).join('') + '</tr>';
     }).join('');
-    A.$('#corr-wrap').innerHTML = '<table class="w-full text-center text-xs border-collapse"><thead>' + head + '</thead><tbody class="divide-y divide-slate-100 font-mono text-xs">' + body + '</tbody></table>';
+    A.$('#corr-wrap').innerHTML = '<div class="matrix-scroll"><table class="w-full text-center text-xs border-collapse"><thead>' + head + '</thead><tbody class="divide-y divide-slate-100 font-mono text-xs">' + body + '</tbody></table></div>';
 
     var pairs = (c.pairs || []).slice().sort(function (a, b) { return Math.abs(b.coefficient) - Math.abs(a.coefficient); }).slice(0, 10);
     var pw = A.$('#pairs-wrap');
@@ -68,8 +68,8 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     A.$('#corr-method').addEventListener('change', loadCorr);
-    var spec = A.state.preprocessing || {};
-    A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/profile' + A.qs({ outlier_method: spec.outlier_method, outlier_threshold: spec.outlier_threshold })).then(function (p) {
+    // 3단계는 기술통계만 쓰므로 이상치 탐지는 건너뛴다 (명세: 전처리 데이터셋은 include_outliers=false)
+    A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/profile' + A.qs({ include_outliers: false })).then(function (p) {
       renderStats(p);
       A.icons();
     }).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); });

@@ -21,7 +21,7 @@
   /* ---------------- 데이터관리카드 ---------------- */
   function loadCards() {
     var q = A.$('#mgmt-search').value || '';
-    return A.get('/api/v1/data-cards/definitions' + A.qs({ limit: 100, q: q })).then(function (p) {
+    return A.get('/api/v1/data-cards' + A.qs({ limit: 100, q: q })).then(function (p) {
       cards = p.items || [];
       A.$('#mgmt-total').textContent = '총 ' + A.num(p.total) + '건';
       renderCards();
@@ -130,7 +130,7 @@
   /** 현재 활성 탭(= 2단계 이후 분석 대상)을 세션 상태에 반영 */
   function syncTarget() {
     var a = active();
-    A.saveState({ datasetId: a ? a.id : null, datasetName: a ? a.name : null, datasetRows: a ? a.n_rows : null, analysisId: null });
+    A.saveState({ datasetId: a ? a.id : null, datasetName: a ? a.name : null, datasetRows: a ? a.n_rows : null, rawDatasetId: null, analysisId: null });
     preview = { dsId: null, rows: [], cols: [], total: a ? a.n_rows : 0, loading: false };
   }
 

@@ -92,7 +92,8 @@
     if (m.target) {
       box.innerHTML = field(cfg.method === 'psm' ? '결과변수 (Outcome / Y)' : '종속변수 (Target / Y)', colSelect('sel-target', 'target', 'numeric', cfg.target, false));
     } else {
-      box.innerHTML = '<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600">선택한 <strong>' + A.esc(m.name) + '</strong> 기법은 종속변수(Target) 지정이 필요하지 않습니다.</div>';
+      // 오른쪽 파라미터 박스와 같은 크기가 되도록 같은 field 틀(라벨 + 입력 높이)로 안내를 표시
+      box.innerHTML = field('종속변수 (Target / Y)', '<div class="w-full bg-slate-100/70 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-500">선택한 <strong class="text-slate-700">' + A.esc(m.name) + '</strong> 기법은 종속변수 지정이 필요하지 않습니다.</div>');
     }
     A.$('#feat-title').textContent = m.feat;
     var avail = numericCols().filter(function (c) { return !m.target || c.name !== cfg.target; });
@@ -100,7 +101,7 @@
       var on = cfg.features.indexOf(c.name) >= 0;
       return '<label class="flex items-center gap-2 p-1.5 rounded hover:bg-white text-xs text-slate-700 cursor-pointer transition-colors"><input type="checkbox" data-feat="' + A.esc(c.name) + '" ' + (on ? 'checked' : '') + ' class="rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"><span class="truncate">' + A.esc(c.name) + '</span><span class="ml-auto text-[10px] text-slate-400 font-mono">' + A.esc(c.role) + '</span></label>';
     }).join('') || '<div class="text-[11px] text-slate-400 p-2">선택 가능한 수치형 변수가 없습니다. 1단계에서 변수 타입을 확인하세요.</div>';
-    A.$('#feat-count').textContent = cfg.features.length + '개';
+    A.$('#feat-count').textContent = cfg.features.length + '개 선택';
 
     A.$('#extra-params').innerHTML = m.fields.map(function (k) {
       var f = FIELDS[k];
@@ -162,7 +163,7 @@
       return;
     }
     var r = analysis, st = STATUS[r.status] || STATUS.pending, m = meta(r.method);
-    var err = (r.status === 'failed') ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.</div>' : '';
+    var err = (r.status === 'failed') ? '<div class="mt-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 whitespace-pre-wrap">' + A.esc(r.error || '분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.') + '</div>' : '';
     p.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2.5">' +
       '<div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-100 flex items-center justify-center shrink-0">' + A.icon('sparkles', 'w-4 h-4') + '</div><div><div class="flex items-center gap-2"><h4 class="text-xs font-bold text-slate-900">' + A.esc(m.name) + ' 연산 결과</h4>' +
       '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ' + st[1] + '">' + st[0] + '</span></div><div class="text-[10px] text-slate-500 mt-0.5 font-mono">' + A.date(r.completed_at || r.created_at) + '</div></div></div></div>' + err;
@@ -170,22 +171,18 @@
   }
 
   function renderPipe() {
-    var m = meta(cfg.method), pc = A.state.preprocessing;
-    var rows = pc ? Object.keys(pc).filter(function (k) { return V(pc[k]); }).map(function (k) { return row(k, Array.isArray(pc[k]) ? pc[k].length + '개 변수' : String(pc[k])); }).join('') : '<div class="text-[11px] text-amber-600">2단계에서 저장한 전처리 규칙이 없습니다 (API 기본값으로 실행).</div>';
-    function V(x) { return x !== null && x !== undefined && x !== ''; }
-    A.$('#pipe-body').innerHTML = '<div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">' +
-      '<div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2"><div class="font-bold text-slate-800 text-[11px] pb-1 border-b border-slate-200">01. 모델 및 변수 바인딩 명세</div><div class="space-y-1 text-[11px]">' +
+    var m = meta(cfg.method);
+    A.$('#pipe-body').innerHTML = '<div class="p-4 text-xs">' +
+      '<div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2"><div class="font-bold text-slate-800 text-[11px] pb-1 border-b border-slate-200">모델 및 변수 바인딩 명세</div><div class="space-y-1 text-[11px]">' +
       '<div class="flex justify-between"><span class="text-slate-500">선택 모형:</span><span class="font-semibold text-slate-800">' + A.esc(m.name) + ' (' + A.esc(m.en) + ')</span></div>' +
       '<div class="flex justify-between"><span class="text-slate-500">종속변수 (Y):</span><span class="font-semibold text-slate-800">' + (m.target ? A.esc(cfg.target || '-') : '없음 (비지도/탐색)') + '</span></div>' +
-      '<div class="pt-1"><span class="text-slate-500 block mb-1">투입 변수 (' + cfg.features.length + '개):</span><div class="flex flex-wrap gap-1">' + cfg.features.map(function (f) { return '<span class="px-1.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] text-slate-700">' + A.esc(f) + '</span>'; }).join('') + '</div></div></div></div>' +
-      '<div class="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2"><div class="font-bold text-slate-800 text-[11px] pb-1 border-b border-slate-200">02. 적용될 전처리 파이프라인 규칙</div><div class="space-y-1.5 text-[11px]">' + rows + '</div></div></div>';
+      '<div class="pt-1"><span class="text-slate-500 block mb-1">투입 변수 (' + cfg.features.length + '개):</span><div class="flex flex-wrap gap-1">' + cfg.features.map(function (f) { return '<span class="px-1.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] text-slate-700">' + A.esc(f) + '</span>'; }).join('') + '</div></div></div></div></div>';
   }
-  function row(k, v) { return '<div class="flex items-center justify-between"><span class="text-slate-500 font-mono">' + A.esc(k) + ':</span><span class="font-medium text-slate-800">' + A.esc(v) + '</span></div>'; }
 
   function run() {
     if (running) return;
     var bad = validate();
-    if (bad) { A.toast(bad, 'error'); return; }
+    if (bad) { analysis = { method: cfg.method, status: 'failed', error: bad, created_at: new Date().toISOString() }; renderResult(); return; }
     running = true;
     var b = A.$('#btn-run');
     b.disabled = true;
@@ -196,9 +193,11 @@
       analysis = r;
       A.saveState({ analysisId: r.id });
       renderResult();
-      if (r.status === 'failed') A.toast('분석 연산에 실패했습니다. 변수·파라미터 설정을 확인한 뒤 다시 시도해 주세요.', 'error');
-      else A.toast('분석 모델 연산이 완료되었습니다. (' + m.name + ')');
-    }).catch(function (e) { A.toast(e.message, 'error'); }).then(function () {
+    }).catch(function (e) {
+      // 요청 자체가 실패한 경우(검증 오류·네트워크 등)도 연산 결과 패널에 실패로 표시
+      analysis = { method: cfg.method, status: 'failed', error: e.message, created_at: new Date().toISOString() };
+      renderResult();
+    }).then(function () {
       running = false;
       b.disabled = false;
       b.innerHTML = A.icon('play', 'w-3.5 h-3.5') + '<span>통계 모델 분석 실행 (Run)</span>';
@@ -235,7 +234,7 @@
       var i = cfg.features.indexOf(id);
       if (e.target.checked && i < 0) cfg.features.push(id);
       if (!e.target.checked && i >= 0) cfg.features.splice(i, 1);
-      A.$('#feat-count').textContent = cfg.features.length + '개';
+      A.$('#feat-count').textContent = cfg.features.length + '개 선택';
       renderPipe(); A.icons();
     });
     A.$('#feat-all').addEventListener('click', function () {

@@ -141,6 +141,8 @@
         if (ct.indexOf('json') >= 0) {
           return res.json().then(function (j) {
             if (!res.ok) { var e = new Error(errMsg(j, res.status)); e.status = res.status; throw e; }
+            // 202 + 작업(JobRead): 백그라운드 작업이 끝날 때까지 기다렸다가 최종 결과를 돌려준다 (호출부는 기존과 동일하게 결과만 받음)
+            if (res.status === 202 && isJob(j)) return waitJob(j, retryAfter(res), method, url);
             return j;
           });
         }
@@ -159,6 +161,60 @@
     });
   }
   App.api = function (method, url, body, opts) { return send(method, url, body, opts || {}, false); };
+
+  /* ------------------------------------------------------------ 백그라운드 작업 (API 명세: 202 Accepted + JobRead → GET /api/v1/jobs/{id}) */
+  var JOB_TIMEOUT_MS = 30 * 60 * 1000;   // 장시간 큐(재현 등)를 고려한 최대 대기
+  function isJob(j) { return j && typeof j === 'object' && j.id && j.status && j.status_url && j.kind; }
+  function retryAfter(res) {
+    var v = parseFloat(res.headers.get('retry-after'));
+    return isFinite(v) && v > 0 ? Math.min(v, 10) * 1000 : 1000;
+  }
+  /** 서버가 준 경로(status_url·result_url)를 이 앱의 프록시 경로로 바꾼다 (절대 URL이면 경로만 사용) */
+  function apiPath(u) {
+    if (!u) return null;
+    var m = /^https?:\/\/[^/]+(\/.*)$/.exec(u);
+    var p = m ? m[1] : u;
+    var i = p.indexOf('/api/v1/');
+    return i >= 0 ? p.slice(i) : p;
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  /** 작업이 끝나면 결과를 읽는다: result → result_url → resource(dataset/analysis) → (탐색 GET) 같은 요청 재전송 */
+  function jobResult(job, method, url) {
+    if (job.result) return Promise.resolve(job.result);
+    var ru = apiPath(job.result_url);
+    if (ru) return App.get(ru);
+    if (job.resource_type && job.resource_id) {
+      var base = { dataset: '/api/v1/datasets/', analysis: '/api/v1/analyses/' }[job.resource_type];
+      if (base) return App.get(base + encodeURIComponent(job.resource_id));
+    }
+    if (method === 'GET') return App.get(url);   // 탐색 API: 작업 완료 후 같은 요청은 캐시에서 200 으로 응답
+    return Promise.resolve(job);
+  }
+  function waitJob(job, delay, method, url) {
+    var started = Date.now();
+    function poll(j, wait) {
+      if (j.status === 'succeeded') return jobResult(j, method, url);
+      if (j.status === 'failed') {
+        // 분석은 실패해도 분석 레코드(status=failed, error)가 남으므로 그걸 돌려줘 화면이 실패 사유를 표시하게 한다
+        if (j.kind === 'analysis' && (j.result_url || j.resource_id)) {
+          return App.get(apiPath(j.result_url) || '/api/v1/analyses/' + encodeURIComponent(j.resource_id));
+        }
+        var e = new Error((j.error && j.error.message) || '작업 처리에 실패했습니다.');
+        e.code = j.error && j.error.code; e.job = j;
+        return Promise.reject(e);
+      }
+      if (Date.now() - started > JOB_TIMEOUT_MS) return Promise.reject(new Error('작업이 너무 오래 걸려 대기를 중단했습니다. 잠시 후 다시 확인해 주세요.'));
+      return sleep(wait).then(function () {
+        return App.api('GET', apiPath(j.status_url) || '/api/v1/jobs/' + encodeURIComponent(j.id), undefined, { raw: true });
+      }).then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (nj) {
+          if (!res.ok || !nj) { var e2 = new Error(errMsg(nj, res.status)); e2.status = res.status; throw e2; }
+          return poll(nj, retryAfter(res));
+        });
+      });
+    }
+    return poll(job, delay);
+  }
   App.get = function (u) { return App.api('GET', u); };
   App.post = function (u, b) { return App.api('POST', u, b === undefined ? {} : b); };
   App.patch = function (u, b) { return App.api('PATCH', u, b === undefined ? {} : b); };
@@ -249,7 +305,7 @@
   /** 데이터셋 조회 실패(404 등: 세션 만료로 삭제된 경우)를 공통 처리 */
   App.datasetGone = function (e) {
     if (e && (e.status === 404 || e.status === 401)) {
-      App.saveState({ datasetId: null, datasetName: null });
+      App.saveState({ datasetId: null, datasetName: null, rawDatasetId: null });
       App.toastFlash('선택한 데이터셋을 찾을 수 없습니다. 다시 선택해 주세요.');
       location.href = App.ctx + '/analysis/step1';
       return true;

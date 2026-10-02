@@ -18,6 +18,8 @@
   <script src="${ctx}/static/vendor/highcharts.js"></script>
   <script src="${ctx}/static/vendor/highcharts-more.js"></script>
   <script src="${ctx}/static/vendor/heatmap.js"></script>
+  <script src="${ctx}/static/vendor/treemap.js"></script>
+  <script src="${ctx}/static/vendor/treegraph.js"></script>
   <script src="${ctx}/static/vendor/exporting.js"></script>
 </head>
 <body class="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-900 antialiased">

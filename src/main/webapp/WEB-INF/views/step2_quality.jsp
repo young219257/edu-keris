@@ -30,11 +30,11 @@
         <i data-lucide="calculator" class="w-4 h-4 text-blue-600"></i>
         <span class="text-xs font-bold text-slate-800">선택 알고리즘: <span class="text-blue-700 font-bold" id="algo-sel-name"></span></span>
         <span id="detect-ok" class="hidden text-[11px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-semibold items-center gap-1 animate-pulse">
-          <i data-lucide="check" class="w-3 h-3"></i> 적용 및 정밀 재탐지 완료!
+          <i data-lucide="check" class="w-3 h-3"></i> 이상치 탐지 완료!
         </span>
       </div>
-      <button type="button" id="btn-detect" class="px-4 py-2 bg-[#003876] hover:bg-[#002855] disabled:bg-slate-400 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-1.5 shrink-0">
-        <i data-lucide="shield-check" class="w-4 h-4"></i><span>선택 기법으로 이상치 재탐지 실행</span>
+      <button type="button" id="btn-detect" class="px-4 py-2 bg-[#003876] hover:bg-[#002855] disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-1.5 shrink-0">
+        <i data-lucide="shield-check" class="w-4 h-4"></i><span>선택 기법으로 이상치 탐지 실행</span>
       </button>
     </div>
   </div>
@@ -80,11 +80,13 @@
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="strategy-grid"></div>
   </div>
 
+  <div id="prep-msg" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3"></div>
+
   <div class="flex items-center justify-between pt-2">
     <a href="${ctx}/analysis/step1" class="px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer shadow-2xs flex items-center gap-1.5">
       <i data-lucide="arrow-left" class="w-4 h-4"></i><span>1단계 데이터 반입으로 돌아가기</span>
     </a>
-    <button type="button" id="btn-next" class="px-5 py-2.5 bg-[#003876] hover:bg-[#002855] text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center gap-2">
+    <button type="button" id="btn-next" class="px-5 py-2.5 bg-[#003876] hover:bg-[#002855] disabled:opacity-60 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shadow-xs flex items-center gap-2">
       <span>3단계 데이터 탐색(EDA) 진행</span><i data-lucide="arrow-right" class="w-4 h-4"></i>
     </button>
   </div>

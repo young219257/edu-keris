@@ -22,33 +22,44 @@
   };
 
   if (!A.requireDataset()) return;
-  var dsId = A.state.datasetId;
+  // 2단계는 항상 원본 데이터셋 기준. 이미 전처리된 데이터셋으로 넘어간 뒤 다시 와도 원본(rawDatasetId)으로 진단·전처리한다.
+  var dsId = A.state.rawDatasetId || A.state.datasetId;
   var ui = A.state.prepUi || {};
-  var sel = { method: (ui.outlier && ui.outlier.method) || 'iqr', threshold: (ui.outlier && ui.outlier.threshold) || 1.5 };
-  var active = { method: sel.method, threshold: sel.threshold };
-  var pcfg = Object.assign({ missing_strategy: 'median', outlier_treatment: 'winsorize', scaling: 'standard', drop_duplicates: false }, ui.prep || {});
+  // 이상치 탐지 기법은 기본 선택 없음. 사용자가 기법을 고르고 '탐지 실행' 버튼을 눌러야 /outliers 를 호출한다.
+  var sel = { method: null, threshold: null };
+  var active = null;   // 마지막으로 탐지를 실행한 기법 {method, threshold}
+  // 전처리 규칙은 항목별 맨 위 옵션이 기본 선택. 저장된 선택이 있으면 유효한 값만 덮어쓴다.
+  var pcfg = {};
+  Object.keys(STRATS).forEach(function (k) {
+    var saved = ui.prep && ui.prep[k];
+    var valid = STRATS[k].opts.some(function (o) { return o[0] === saved; });
+    pcfg[k] = valid ? saved : STRATS[k].opts[0][0];
+  });
   var profile = null, dataset = null, selectedCol = null;
 
-  function algo(id) { return ALGOS.filter(function (a) { return a.id === id; })[0] || ALGOS[0]; }
+  function algo(id) { return ALGOS.filter(function (a) { return a.id === id; })[0] || null; }
   function byCol(list) { var m = {}; (list || []).forEach(function (x) { m[x.column] = x; }); return m; }
 
-  /** 화면 선택값 → API PreprocessingSpec (분석 실행 시 그대로 전송) */
+  /** 결측치·이상치·스케일링 → POST /datasets/{id}/preprocess 요청 (전처리된 새 데이터셋 생성) */
+  function buildPreprocessRequest() {
+    var req = { missing_strategy: pcfg.missing_strategy, outlier_treatment: pcfg.outlier_treatment, scaling: pcfg.scaling };
+    // 이상치 판정은 2단계에서 탐지를 실행한 기법·임계값과 맞춘다 (명세 권고). 탐지를 안 했으면 서버 기본값
+    if (active) { req.outlier_method = active.method; req.outlier_threshold = Number(active.threshold); }
+    return req;
+  }
+  function needsPreprocess() { return pcfg.missing_strategy !== 'none' || pcfg.outlier_treatment !== 'keep' || pcfg.scaling !== 'none'; }
+  /** 분석 실행 시 보내는 PreprocessingSpec: 결측치·이상치·스케일링은 이미 데이터셋에 적용됐으므로 다시 하지 않고,
+   *  /preprocess 에 없는 중복 행 제거와 범주형 인코딩만 여기서 지정한다. */
   function buildSpec() {
-    var numericCols = profile ? (profile.numeric || []).map(function (n) { return n.column; }) : [];
-    var spec = {
-      drop_duplicates: !!pcfg.drop_duplicates,
-      missing_strategy: pcfg.missing_strategy,
-      outlier_treatment: pcfg.outlier_treatment,
-      outlier_method: sel.method,
-      outlier_threshold: Number(sel.threshold),
-      scaling: pcfg.scaling,
-      encoding: 'onehot'
-    };
-    if (pcfg.outlier_treatment !== 'keep') spec.outlier_columns = numericCols;
-    return spec;
+    return { drop_duplicates: !!pcfg.drop_duplicates, outlier_treatment: 'keep', scaling: 'none', encoding: 'onehot' };
   }
   function persist() {
-    A.saveState({ preprocessing: buildSpec(), prepUi: { outlier: { method: sel.method, threshold: sel.threshold }, prep: pcfg } });
+    A.saveState({ preprocessing: buildSpec(), prepUi: { outlier: active, prep: pcfg } });
+  }
+  function setMsg(text) {
+    var m = A.$('#prep-msg');
+    m.textContent = text || '';
+    m.classList.toggle('hidden', !text);
   }
 
   /* ---------------- 알고리즘 카드 ---------------- */
@@ -63,7 +74,9 @@
           a.opts.map(function (o) { return '<option value="' + o[0] + '"' + (Number(on ? sel.threshold : a.def) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>';
     }).join('');
     var a = algo(sel.method);
-    A.$('#algo-sel-name').textContent = a.name;
+    var nm = A.$('#algo-sel-name');
+    nm.textContent = a ? a.name : '-';
+    nm.className = 'text-blue-700 font-bold';
   }
 
   /* ---------------- 진단 결과 ---------------- */
@@ -71,32 +84,32 @@
 
   function renderQuality() {
     if (!profile) return;
-    var a = algo(active.method);
+    var a = active && algo(active.method);
     var outs = totalOutliers();
     A.$('#card-rows').textContent = A.num(profile.n_rows) + '행 × ' + profile.n_cols + '변수';
     var cm = A.$('#card-missing');
     cm.textContent = A.num(profile.total_missing_cells) + '건 (' + (profile.missing_ratio * 100).toFixed(1) + '%)';
     cm.className = 'text-lg font-bold font-mono mt-0.5 block ' + (profile.total_missing_cells > 0 ? 'text-amber-600' : 'text-slate-900');
-    A.$('#card-out-label').textContent = '이상치 검출 (' + a.name + ')';
+    A.$('#card-out-label').textContent = a ? '이상치 검출 (' + a.name + ')' : '이상치 검출';
     var co = A.$('#card-outliers');
-    co.textContent = A.num(outs) + '건';
-    co.className = 'text-lg font-bold font-mono mt-0.5 block ' + (outs > 0 ? 'text-blue-700' : 'text-slate-900');
+    co.textContent = a ? A.num(outs) + '건' : '탐지 전';
+    co.className = 'text-lg font-bold font-mono mt-0.5 block ' + (!a ? 'text-slate-400' : outs > 0 ? 'text-blue-700' : 'text-slate-900');
     var cd = A.$('#card-dups');
     cd.textContent = A.num(profile.n_duplicated_rows) + '행';
     cd.className = 'text-lg font-bold font-mono mt-0.5 block ' + (profile.n_duplicated_rows > 0 ? 'text-amber-600' : 'text-slate-900');
-    A.$('#applied-name').textContent = a.name;
-    A.$('#applied-formula').textContent = a.formula;
-    A.$('#th-out').textContent = '이상치 (' + a.name + ')';
+    A.$('#applied-name').textContent = a ? a.name : '미실행';
+    A.$('#applied-formula').textContent = a ? a.formula : '위에서 탐지 기법을 선택하고 실행하세요';
+    A.$('#th-out').textContent = a ? '이상치 (' + a.name + ')' : '이상치';
 
     var miss = byCol(profile.missing), outl = byCol(profile.outliers);
     var nums = profile.numeric || [];
     if (!selectedCol && nums.length) selectedCol = nums[0].column;
     A.$('#var-body').innerHTML = nums.map(function (n) {
-      var mc = (miss[n.column] || {}).n_missing || n.missing || 0, oc = (outl[n.column] || {}).n_outliers || 0, issue = mc > 0 || oc > 0;
+      var mc = (miss[n.column] || {}).n_missing || n.missing || 0, oc = (outl[n.column] || {}).n_outliers || 0, issue = mc > 0 || (a && oc > 0);
       return '<tr data-col="' + A.esc(n.column) + '" class="cursor-pointer transition-colors ' + (n.column === selectedCol ? 'bg-blue-50/70 font-semibold' : 'hover:bg-slate-50') + '">' +
         '<td class="py-2.5 px-3 font-sans font-medium text-slate-800">' + A.esc(n.column) + '</td>' +
         '<td class="py-2.5 px-3 text-right">' + (mc > 0 ? '<span class="text-amber-600 font-bold">' + A.num(mc) + '</span>' : '<span class="text-slate-400">0</span>') + '</td>' +
-        '<td class="py-2.5 px-3 text-right">' + (oc > 0 ? '<span class="text-blue-700 font-bold">' + A.num(oc) + '</span>' : '<span class="text-slate-400">0</span>') + '</td>' +
+        '<td class="py-2.5 px-3 text-right">' + (!a ? '<span class="text-slate-300">-</span>' : oc > 0 ? '<span class="text-blue-700 font-bold">' + A.num(oc) + '</span>' : '<span class="text-slate-400">0</span>') + '</td>' +
         '<td class="py-2.5 px-3 text-right font-sans">' + (issue ? '<span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">조치 필요</span>' : '<span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">양호</span>') + '</td></tr>';
     }).join('') || '<tr><td colspan="4" class="py-6 text-center text-slate-400 font-sans">수치형 변수가 없습니다.</td></tr>';
     renderDetail();
@@ -108,16 +121,17 @@
     var n = (profile.numeric || []).filter(function (x) { return x.column === selectedCol; })[0];
     if (!n) { card.innerHTML = '<div class="text-xs text-slate-400 text-center py-6">분석할 수치형 변수가 없습니다.</div>'; return; }
     var o = byCol(profile.outliers)[selectedCol];
-    var a = algo(active.method);
+    var a = active && algo(active.method);
     function box(label, v, hi) { return '<div class="' + (hi ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200') + ' p-2.5 rounded-lg border"><span class="' + (hi ? 'text-blue-800 font-bold' : 'text-slate-400') + ' text-[10px] block font-sans">' + label + '</span><strong class="' + (hi ? 'text-blue-900' : 'text-slate-800') + '">' + A.fix(v, 2) + '</strong></div>'; }
-    var bounds = o && (o.lower_bound !== null && o.lower_bound !== undefined || o.upper_bound !== null && o.upper_bound !== undefined) ? '하한: ' + A.fix(o.lower_bound, 2) + ' | 상한: ' + A.fix(o.upper_bound, 2) : '평균: ' + A.fix(n.mean, 2) + ' | 표준편차: ±' + A.fix(n.std, 2);
+    var bounds = a && o && (o.lower_bound !== null && o.lower_bound !== undefined || o.upper_bound !== null && o.upper_bound !== undefined) ? '하한: ' + A.fix(o.lower_bound, 2) + ' | 상한: ' + A.fix(o.upper_bound, 2) : '평균: ' + A.fix(n.mean, 2) + ' | 표준편차: ±' + A.fix(n.std, 2);
     var samples = '';
-    if (o && o.n_outliers > 0) {
+    if (a && o && o.n_outliers > 0) {
       var idx = o.sample_indices || [], vals = o.sample_values || [];
       samples = '<div class="pt-2 border-t border-slate-100"><div class="text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between"><span>검출된 이상치 표본 (' + A.num(o.n_outliers) + '건, ' + (o.ratio * 100).toFixed(1) + '%' + (o.n_outliers > idx.length ? ', 상위 ' + idx.length + '건 표시' : '') + ')</span><span class="text-[10px] font-normal text-slate-400">탐지 기준: ' + A.esc(a.name) + '</span></div><div class="max-h-36 overflow-y-auto space-y-1">' +
         idx.slice(0, 20).map(function (ri, i) { return '<div class="flex items-center justify-between text-xs bg-blue-50/50 px-3 py-1.5 rounded border border-blue-100 font-mono gap-2"><span class="text-slate-600 font-bold shrink-0">#' + ri + '행</span><span class="text-slate-800 font-bold">관측값: ' + A.esc(vals[i]) + '</span></div>'; }).join('') + '</div></div>';
     }
-    card.innerHTML = '<div class="flex items-center justify-between flex-wrap gap-2"><h4 class="text-xs font-bold text-slate-900">[' + A.esc(n.column) + '] 통계 지표 및 이상치 분포</h4><span class="text-[10px] text-slate-500 font-mono">' + bounds + '</span></div>' +
+    if (!a) samples = '<div class="pt-2 border-t border-slate-100 text-[11px] text-slate-400">이상치 분포는 위에서 탐지 기법을 선택하고 탐지를 실행하면 표시됩니다.</div>';
+    card.innerHTML = '<div class="flex items-center justify-between flex-wrap gap-2"><h4 class="text-xs font-bold text-slate-900">[' + A.esc(n.column) + '] 통계 지표' + (a ? ' 및 이상치 분포' : '') + '</h4><span class="text-[10px] text-slate-500 font-mono">' + bounds + '</span></div>' +
       '<div class="grid grid-cols-5 gap-3 text-center text-xs font-mono">' + box('최솟값', n.min) + box('1사분위(Q1)', n.q1) + box('중앙값(Median)', n.median, true) + box('3사분위(Q3)', n.q3) + box('최댓값', n.max) + '</div>' + samples;
   }
 
@@ -134,10 +148,20 @@
     }).join('');
   }
 
-  function runDetect() {
-    return A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/profile' + A.qs({ outlier_method: sel.method, outlier_threshold: sel.threshold })).then(function (p) {
+  /** 진입 시: 이상치 탐지 없이 기본 품질 프로파일만 조회 */
+  function loadProfile() {
+    return A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/profile' + A.qs({ include_outliers: false })).then(function (p) {
       profile = p;
-      active = { method: sel.method, threshold: sel.threshold };
+      renderQuality();
+      persist();
+    });
+  }
+  /** '탐지 실행' 버튼: 선택한 기법·임계값으로 이상치 탐지 */
+  function runDetect() {
+    var req = { method: sel.method, threshold: sel.threshold };
+    return A.get('/api/v1/datasets/' + encodeURIComponent(dsId) + '/outliers' + A.qs(req)).then(function (list) {
+      profile.outliers = list || [];
+      active = req;
       renderQuality();
       persist();
     });
@@ -160,6 +184,13 @@
     });
     A.$('#btn-detect').addEventListener('click', function () {
       var b = this;
+      if (!profile) return;
+      if (!sel.method) {   // 버튼은 항상 활성. 기법을 고르지 않았으면 안내만 표시
+        var nm = A.$('#algo-sel-name');
+        nm.textContent = '위 카드에서 탐지 기법을 먼저 선택하세요';
+        nm.className = 'text-rose-600 font-bold';
+        return;
+      }
       b.disabled = true;
       b.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full spin inline-block"></span><span>알고리즘 연산 중...</span>';
       runDetect().then(function () {
@@ -168,7 +199,7 @@
         setTimeout(function () { ok.classList.add('hidden'); ok.classList.remove('flex'); }, 3000);
       }).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); }).then(function () {
         b.disabled = false;
-        b.innerHTML = A.icon('shield-check', 'w-4 h-4') + '<span>선택 기법으로 이상치 재탐지 실행</span>';
+        b.innerHTML = A.icon('shield-check', 'w-4 h-4') + '<span>선택 기법으로 이상치 탐지 실행</span>';
         A.icons();
       });
     });
@@ -187,13 +218,31 @@
       A.toast('전처리 규칙이 저장되었습니다.');
     });
     A.$('#btn-next').addEventListener('click', function () {
+      var b = this, label = b.querySelector('span');
       persist();
-      location.href = A.ctx + '/analysis/step3';
+      setMsg('');
+      if (!needsPreprocess()) {   // 적용할 규칙이 없으면 원본 그대로 진행
+        A.saveState({ datasetId: dsId, datasetName: dataset && dataset.name, datasetRows: dataset && dataset.n_rows, rawDatasetId: dsId, analysisId: null });
+        location.href = A.ctx + '/analysis/step3';
+        return;
+      }
+      b.disabled = true;
+      label.textContent = '전처리 적용 중...';
+      // 원본은 그대로 두고 전처리된 새 데이터셋(source_type=preprocessed)을 만든다. 이후 3·4단계는 이 데이터셋으로 진행
+      A.post('/api/v1/datasets/' + encodeURIComponent(dsId) + '/preprocess', buildPreprocessRequest()).then(function (d) {
+        A.saveState({ datasetId: d.id, datasetName: d.name, datasetRows: d.n_rows, rawDatasetId: dsId, analysisId: null });
+        location.href = A.ctx + '/analysis/step3';
+      }).catch(function (err) {
+        if (A.datasetGone(err)) return;
+        setMsg('전처리 적용에 실패했습니다: ' + err.message);
+        b.disabled = false;
+        label.textContent = '3단계 데이터 탐색(EDA) 진행';
+      });
     });
 
     A.get('/api/v1/datasets/' + encodeURIComponent(dsId)).then(function (d) {
       dataset = d;
-      return runDetect();
+      return loadProfile();
     }).then(function () { A.icons(); }).catch(function (e) { if (!A.datasetGone(e)) A.toast(e.message, 'error'); });
     A.icons();
   });

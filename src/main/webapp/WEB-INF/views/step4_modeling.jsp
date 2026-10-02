@@ -46,7 +46,7 @@
                 <button type="button" id="feat-all" class="text-blue-700 hover:text-blue-800 hover:underline cursor-pointer font-medium">전체선택</button>
                 <span class="text-slate-300">|</span>
                 <button type="button" id="feat-none" class="text-slate-400 hover:underline cursor-pointer">해제</button>
-                <span class="ml-1 px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded font-mono font-bold text-[10px]" id="feat-count">0개</span>
+                <span class="ml-1 px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded font-mono font-bold text-[10px]" id="feat-count">0개 선택</span>
               </div>
             </div>
             <div class="border border-slate-200 rounded-lg p-2 max-h-52 overflow-y-auto space-y-1 bg-slate-50/40" id="feat-list"></div>

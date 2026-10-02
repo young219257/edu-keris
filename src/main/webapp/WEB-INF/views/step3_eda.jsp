@@ -24,11 +24,12 @@
       </h4>
       <div class="text-[11px] text-slate-500">총 관측치: <strong class="font-mono text-slate-800" id="stat-rows">-</strong></div>
     </div>
-    <div class="overflow-x-auto">
+    <%-- 변수가 많으면 기본 높이(420px) 안에서 스크롤, 머리행·변수명 열 고정 (app.css .matrix-scroll) --%>
+    <div class="matrix-scroll">
       <table class="w-full text-left text-xs border-collapse">
         <thead>
           <tr class="bg-slate-50 text-slate-700 border-b border-slate-200 text-[11px] font-semibold">
-            <th class="py-2.5 px-3">변수명</th>
+            <th class="py-2.5 px-3 mx-sticky">변수명</th>
             <th class="py-2.5 px-2.5 text-right font-medium">유효표본(N)</th>
             <th class="py-2.5 px-2.5 text-right font-medium text-slate-900">평균 (Mean)</th>
             <th class="py-2.5 px-2.5 text-right font-medium">표준편차 (SD)</th>

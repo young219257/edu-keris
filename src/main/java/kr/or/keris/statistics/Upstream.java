@@ -35,12 +35,17 @@ public class Upstream implements DisposableBean {
         public final int status;
         public final String contentType;
         public final String contentDisposition;
+        /** 202 작업 응답의 재조회 간격(초)·위치. 없으면 null */
+        public final String retryAfter;
+        public final String location;
         public final byte[] body;
 
-        Result(int status, String contentType, String contentDisposition, byte[] body) {
+        Result(int status, String contentType, String contentDisposition, String retryAfter, String location, byte[] body) {
             this.status = status;
             this.contentType = contentType;
             this.contentDisposition = contentDisposition;
+            this.retryAfter = retryAfter;
+            this.location = location;
             this.body = body;
         }
     }
@@ -64,8 +69,11 @@ public class Upstream implements DisposableBean {
             byte[] payload = response.getEntity() == null ? new byte[0] : EntityUtils.toByteArray(response.getEntity());
             Header ct = response.getFirstHeader("Content-Type");
             Header cd = response.getFirstHeader("Content-Disposition");
+            Header ra = response.getFirstHeader("Retry-After");
+            Header loc = response.getFirstHeader("Location");
             return new Result(response.getStatusLine().getStatusCode(),
-                    ct != null ? ct.getValue() : "application/json", cd != null ? cd.getValue() : null, payload);
+                    ct != null ? ct.getValue() : "application/json", cd != null ? cd.getValue() : null,
+                    ra != null ? ra.getValue() : null, loc != null ? loc.getValue() : null, payload);
         } finally {
             EntityUtils.consumeQuietly(response.getEntity());
         }

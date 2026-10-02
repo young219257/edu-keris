@@ -92,3 +92,9 @@ canvas { max-width: 100%; }
   header, nav, aside, footer, .no-print { display: none !important; }
   main { padding: 0 !important; }
 }
+
+/* 행렬 표(상관행렬·혼동행렬·적재값 등): 기본 높이를 넘으면 스크롤, 머리행·첫 열 고정 */
+.matrix-scroll{max-height:420px;overflow:auto}
+.matrix-scroll thead th{position:sticky;top:0;z-index:2;background:#f8fafc}
+.matrix-scroll .mx-sticky{position:sticky;left:0;z-index:1;background:#fff}
+.matrix-scroll thead .mx-sticky{z-index:3;background:#f8fafc}
